@@ -26,7 +26,7 @@ class PosRemision extends Component
 
             $productoSucursal = ProductoSucursal::with(['variante.producto'])
                 ->where('producto_variante_id', $detalle->producto_variante_id)
-                ->where('sucursal_id', $this->orden->sucursal_id)
+                ->where('sucursal_id', $this->remision->sucursal_id)
                 ->first();
 
             if (!$productoSucursal) {
