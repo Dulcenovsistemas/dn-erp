@@ -1,7 +1,9 @@
+@php
+    $soloLectura = !auth()->user()->hasRole('admin');
+@endphp
+
 @extends('layouts.admin.app')
-
 @section('title', 'Inventario')
-
 @section('content')
 
 <div class="mb-6">
@@ -73,7 +75,8 @@
                                 min="0"
                                 name="variantes[{{ $variante->id }}][precio]"
                                 value="{{ $pivot->precio ?? 0 }}"
-                                class="w-24 rounded border-gray-300 text-center">
+                                class="w-24 rounded border-gray-300 text-center"
+                                 {{ $soloLectura ? 'disabled' : '' }}>
                         </td>
 
                         <td class="px-6 py-3 text-center">
@@ -81,13 +84,15 @@
                                 min="0"
                                 name="variantes[{{ $variante->id }}][stock]"
                                 value="{{ $pivot->stock ?? 0 }}"
-                                class="w-20 rounded border-gray-300 text-center">
+                                class="w-20 rounded border-gray-300 text-center"
+                                 {{ $soloLectura ? 'disabled' : '' }}>
                         </td>
 
                         <td class="px-6 py-3 text-center">
                             <input type="checkbox"
                                 name="variantes[{{ $variante->id }}][activo]"
-                                {{ ($pivot->activo ?? false) ? 'checked' : '' }}>
+                                {{ ($pivot->activo ?? false) ? 'checked' : '' }}
+                                {{ $soloLectura ? 'disabled' : '' }}>
                         </td>
                     </tr>
                 @endforeach
@@ -99,12 +104,14 @@
         </table>
     </div>
 
+    @role('admin')
     <div class="flex justify-end mt-6">
         <button type="submit"
                 class="px-5 py-2 bg-gray-900 text-white rounded-lg text-sm">
             Guardar inventario
         </button>
     </div>
+    @endrole
 </form>
 <script>
     function toggleCategoria(slug) {

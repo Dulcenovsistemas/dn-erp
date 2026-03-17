@@ -23,6 +23,7 @@
 
             <div class="space-y-2">
 
+                @hasanyrole('admin|gerente')
                 <a href="{{ route('admin.sucursales.index') }}"
                    class="flex items-center justify-between px-4 py-2 rounded-lg border hover:bg-gray-50 transition">
                     <span class="text-sm text-gray-700">
@@ -30,7 +31,9 @@
                     </span>
                     <span class="text-gray-400">→</span>
                 </a>
+                @endhasanyrole
 
+                @hasanyrole('admin')
                 <a href="{{ route('admin.usuarios.index') }}"
                    class="flex items-center justify-between px-4 py-2 rounded-lg border hover:bg-gray-50 transition">
                     <span class="text-sm text-gray-700">
@@ -54,6 +57,7 @@
                     </span>
                     <span class="text-gray-400">→</span>
                 </a>
+                @endhasanyrole
 
             </div>
         </div>
@@ -69,6 +73,7 @@
 
             <div class="space-y-2">
 
+                @hasanyrole('admin')
                  <a href="{{ route('admin.productos.index') }}"
                    class="flex items-center justify-between px-4 py-2 rounded-lg border hover:bg-gray-50 transition">
                     <span class="text-sm text-gray-700">
@@ -100,6 +105,7 @@
                     </span>
                     <span class="text-gray-400">→</span>
                 </a>
+                 @endhasanyrole
 
             </div>
         </div>
@@ -116,6 +122,7 @@
 
             <div class="space-y-2">
 
+                @hasanyrole('admin|gerente|Ventas mostrador')
                 <a href="{{ route('admin.ordenes.index') }}"
                    class="flex items-center justify-between px-4 py-2 rounded-lg border hover:bg-gray-50 transition">
                     <span class="text-sm text-gray-700">
@@ -139,6 +146,8 @@
                     </span>
                     <span class="text-gray-400">→</span>
                 </a>
+                @endhasanyrole
+                
             </div>
         </div>
 

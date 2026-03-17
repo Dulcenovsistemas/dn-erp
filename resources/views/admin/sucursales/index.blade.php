@@ -58,6 +58,8 @@
                             📦
                         </a>
 
+                        @role('admin')
+
                         {{-- Editar --}}
                         <a href="{{ route('admin.sucursales.edit', $sucursal) }}"
                         class="text-orange-500 hover:text-orange-700 mr-3"
@@ -79,6 +81,8 @@
                                 🗑️
                             </button>
                         </form>
+
+                        @endrole
 
                     </td>
 

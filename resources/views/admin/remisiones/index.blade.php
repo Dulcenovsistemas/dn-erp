@@ -52,8 +52,6 @@
 
                         @if ($remision->estado === 'en_proceso')
 
-                           
-
                             <form action="{{ route('admin.remisiones.cambiarEstado', $remision) }}"
 
                                 method="POST" 

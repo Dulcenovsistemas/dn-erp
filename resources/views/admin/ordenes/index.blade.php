@@ -52,29 +52,38 @@
 
                         @if ($orden->estado === 'en_proceso')
 
-                           
+                            @unlessrole('Ventas mostrador')
 
-                            <form action="{{ route('admin.ordenes.cambiarEstado', $orden) }}" 
-                                method="POST" 
-                                class="mt-2">
-                                @csrf
-                                @method('PATCH')
+                                <form action="{{ route('admin.ordenes.cambiarEstado', $orden) }}" 
+                                    method="POST" 
+                                    class="mt-2">
+                                    @csrf
+                                    @method('PATCH')
 
-                                <select name="estado"
-                                        class="mt-1 text-xs rounded border-gray-300 focus:ring-2 focus:ring-blue-500"
-                                        onchange="if(this.value === 'finalizada'){ 
-                                            if(confirm('¿Seguro que deseas finalizar esta orden? Esto descontará inventario.')){
-                                                this.form.submit();
-                                            } else {
-                                                this.value='en_proceso';
-                                            }
-                                        }">
+                                    <select name="estado"
+                                            class="mt-1 text-xs rounded border-gray-300 focus:ring-2 focus:ring-blue-500"
+                                            onchange="if(this.value === 'finalizada'){ 
+                                                if(confirm('¿Seguro que deseas finalizar esta orden? Esto descontará inventario.')){
+                                                    this.form.submit();
+                                                } else {
+                                                    this.value='en_proceso';
+                                                }
+                                            }">
 
-                                    <option value="en_proceso" selected>En proceso</option>
-                                    <option value="finalizada">Finalizar orden</option>
+                                        <option value="en_proceso" selected>En proceso</option>
+                                        <option value="finalizada">Finalizar orden</option>
 
-                                </select>
-                            </form>
+                                    </select>
+                                </form>
+
+                            @else
+
+                                {{-- Solo vista para ventas --}}
+                                <span class="px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-700">
+                                    En proceso
+                                </span>
+
+                            @endunlessrole
 
                         @elseif ($orden->estado === 'finalizada')
 

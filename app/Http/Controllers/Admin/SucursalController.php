@@ -5,15 +5,22 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Sucursal;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class SucursalController extends Controller
 {
     public function index()
     {
-        $sucursales = Sucursal::orderBy('nombre')->get();
+        $user = Auth::user();
+
+        if ($user->hasRole('admin')) {
+            $sucursales = Sucursal::orderBy('nombre')->get();
+        } else {
+            $sucursales = $user->sucursales()->orderBy('nombre')->get();
+        }
+
         return view('admin.sucursales.index', compact('sucursales'));
     }
-
     
 
 
