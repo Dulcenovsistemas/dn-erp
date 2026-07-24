@@ -121,7 +121,7 @@
             </p>
 
             <div class="space-y-2">
-
+                    
                 @hasanyrole('admin|gerente|Ventas mostrador')
                 <a href="{{ route('admin.ordenes.index') }}"
                    class="flex items-center justify-between px-4 py-2 rounded-lg border hover:bg-gray-50 transition">
@@ -148,6 +148,57 @@
                 </a>
                 @endhasanyrole
                 
+            </div>
+        </div>
+
+
+        {{-- Card Administración --}}
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-1">
+                Pedidos
+            </h2>
+            <p class="text-sm text-gray-500 mb-4">
+                Gestión general de pedidos
+            </p>
+
+            <div class="space-y-2">
+
+                @hasanyrole('admin|gerente')
+                <a href="{{ route('admin.pedidos.index') }}"
+                   class="flex items-center justify-between px-4 py-2 rounded-lg border hover:bg-gray-50 transition">
+                    <span class="text-sm text-gray-700">
+                        Sucursales - Inventarios
+                    </span>
+                    <span class="text-gray-400">→</span>
+                </a>
+                @endhasanyrole
+
+                @hasanyrole('admin')
+                <a href="{{ route('admin.usuarios.index') }}"
+                   class="flex items-center justify-between px-4 py-2 rounded-lg border hover:bg-gray-50 transition">
+                    <span class="text-sm text-gray-700">
+                        Usuarios
+                    </span>
+                    <span class="text-gray-400">→</span>
+                </a>
+
+                 <a href="{{ route('admin.productos.index') }}"
+                   class="flex items-center justify-between px-4 py-2 rounded-lg border hover:bg-gray-50 transition">
+                    <span class="text-sm text-gray-700">
+                        Productos
+                    </span>
+                    <span class="text-gray-400">→</span>
+                </a>
+
+                <a href="{{ route('admin.categorias.index') }}"
+                   class="flex items-center justify-between px-4 py-2 rounded-lg border hover:bg-gray-50 transition">
+                    <span class="text-sm text-gray-700">
+                        Categorias
+                    </span>
+                    <span class="text-gray-400">→</span>
+                </a>
+                @endhasanyrole
+
             </div>
         </div>
 

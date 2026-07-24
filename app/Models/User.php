@@ -56,4 +56,14 @@ class User extends Authenticatable
         return $this->belongsToMany(Sucursal::class);
     }
 
+    public function pedidos()
+    {
+        return $this->hasMany(Pedido::class);
+    }
+
+    public function historialPedidos()
+    {
+        return $this->hasMany(PedidoHistorial::class);
+    }
+
 }

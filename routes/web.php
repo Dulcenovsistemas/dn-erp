@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\OrdenVentaGastosController;
 use App\Http\Controllers\Admin\CorteController;
 use App\Http\Controllers\Admin\RemisionController;
 use App\Http\Controllers\Admin\MovimientoInventarioController;
+use App\Http\Controllers\PedidoController;
 use App\Livewire\OrdenVentaGastos;
 
 Route::get('/', function () {
@@ -134,7 +135,9 @@ Route::middleware(['auth', 'role:admin|gerente|Ventas mostrador'])
             [RemisionController::class, 'cambiarEstado']
         )->name('remisiones.cambiarEstado');
 
-    
+            
+
+        Route::resource('pedidos', PedidoController::class);
 
     });
 

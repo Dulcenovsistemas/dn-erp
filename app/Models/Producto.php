@@ -26,4 +26,9 @@ class Producto extends Model
     {
         return $this->hasMany(ProductoVariante::class);
     }
+
+    public function pedidoDetalles()
+    {
+        return $this->hasMany(PedidoDetalle::class);
+    }
 }

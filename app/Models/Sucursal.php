@@ -40,4 +40,14 @@ class Sucursal extends Model
         ->withTimestamps();
     }
 
+    public function pedidos()
+    {
+        return $this->hasMany(Pedido::class);
+    }
+
+    public function calendarioPedidos()
+    {
+        return $this->hasMany(PedidoCalendario::class);
+    }
+
 }
