@@ -38,7 +38,7 @@
                 </th>
 
                 <th class="px-6 py-4 text-left">
-                    Sucursal
+                    Zona
                 </th>
 
                 <th class="px-6 py-4 text-left">
@@ -76,7 +76,7 @@
                     </td>
 
                     <td class="px-6 py-4">
-                        {{ $pedido->sucursal->nombre }}
+                        {{ $pedido->zona->nombre }}
                     </td>
 
                     <td class="px-6 py-4">

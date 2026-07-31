@@ -69,20 +69,39 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Sucursales asignadas
+                    Zonas asignadas
                 </label>
 
                 <div class="grid grid-cols-2 gap-3">
-                    @foreach ($sucursales as $sucursal)
-                        <label class="flex items-center gap-2 text-sm">
-                            <input type="checkbox"
-                                name="sucursales[]"
-                                value="{{ $sucursal->id }}">
 
-                            {{ $sucursal->nombre }}
+                    @forelse ($zonas as $zona)
+
+                        <label class="flex items-center gap-2 text-sm">
+
+                            <input
+                                type="checkbox"
+                                name="zonas[]"
+                                value="{{ $zona->id }}"
+                                class="rounded border-gray-300"
+                                {{ in_array($zona->id, old('zonas', [])) ? 'checked' : '' }}>
+
+                            {{ $zona->nombre }}
+
                         </label>
-                    @endforeach
+
+                    @empty
+
+                        <p class="text-sm text-gray-500">
+                            No hay zonas registradas.
+                        </p>
+
+                    @endforelse
+
                 </div>
+
+                @error('zonas')
+                    <p class="text-sm text-red-500 mt-2">{{ $message }}</p>
+                @enderror
             </div>
 
 

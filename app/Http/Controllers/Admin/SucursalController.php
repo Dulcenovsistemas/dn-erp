@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Sucursal;
+use App\Models\Zona;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -26,7 +27,11 @@ class SucursalController extends Controller
 
     public function create()
     {
-        return view('admin.sucursales.create');
+        $zonas = Zona::where('activo', true)
+            ->orderBy('nombre')
+            ->get();
+
+        return view('admin.sucursales.create', compact('zonas'));
     }
 
     public function store(Request $request)
@@ -35,6 +40,7 @@ class SucursalController extends Controller
             'nombre' => 'required|string|max:255',
             'ciudad' => 'required|string|max:255',
             'direccion' => 'nullable|string',
+            'zona_id' => 'required|exists:zonas,id',
         ]);
 
         // Manejo correcto del checkbox
@@ -50,17 +56,25 @@ class SucursalController extends Controller
 
     public function edit(Sucursal $sucursale)
     {
-        return view('admin.sucursales.edit', ['sucursal' => $sucursale]);
+        $zonas = Zona::where('activo', true)
+            ->orderBy('nombre')
+            ->get();
+
+        return view('admin.sucursales.edit', [
+            'sucursal' => $sucursale,
+            'zonas' => $zonas,
+        ]);
     }
 
-   public function update(Request $request, Sucursal $sucursale)
+    public function update(Request $request, Sucursal $sucursale)
     {
         $data = $request->validate([
             'nombre' => 'required|string|max:255',
             'ciudad' => 'required|string|max:255',
             'direccion' => 'nullable|string',
+            'zona_id' => 'required|exists:zonas,id',
         ]);
-
+        
         // Manejo correcto del checkbox
         $data['activo'] = $request->has('activo');
 

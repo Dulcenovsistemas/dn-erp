@@ -40,7 +40,7 @@ require __DIR__.'/auth.php';
 | ADMIN
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:admin|gerente|Ventas mostrador'])
+Route::middleware(['auth', 'role:admin|fabrica|Ventas mostrador'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {

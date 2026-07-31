@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\Sucursal;
+use App\Models\Zona;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Auth;
@@ -24,9 +24,15 @@ class UserController extends Controller
     public function create()
     {
         $roles = Role::orderBy('name')->get();
-        $sucursales = Sucursal::orderBy('nombre')->get();
 
-        return view('admin.usuarios.create', compact('roles', 'sucursales'));
+        $zonas = Zona::where('activo', true)
+            ->orderBy('nombre')
+            ->get();
+
+        return view('admin.usuarios.create', compact(
+            'roles',
+            'zonas'
+        ));
     }
 
 
@@ -37,25 +43,27 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8',
             'role' => 'required|exists:roles,name',
-            'sucursales' => 'nullable|array',
-            'sucursales.*' => 'exists:sucursals,id',
+            'zonas' => 'nullable|array',
+            'zonas.*' => 'exists:zonas,id',
         ]);
 
         $data['password'] = bcrypt($data['password']);
         $data['activo'] = $request->has('activo');
 
         // ⛔ Quitamos campos que no pertenecen a users
-        unset($data['role'], $data['sucursales']);
+        unset($data['role'], $data['zonas']);
 
         $user = User::create($data);
 
         // Rol
         $user->assignRole($request->role);
 
-        // Sucursales
-        if ($request->filled('sucursales')) {
-            $user->sucursales()->sync($request->sucursales);
-        }
+        // Zonas
+        $user->zonas()->sync(
+            $request->input('zonas', [])
+        );
+
+    
 
         return redirect()
             ->route('admin.usuarios.index')
@@ -66,11 +74,17 @@ class UserController extends Controller
     public function edit(User $usuario)
     {
         $roles = Role::orderBy('name')->get();
-        $sucursales = Sucursal::orderBy('nombre')->get();
 
-        return view('admin.usuarios.edit', compact('usuario', 'roles', 'sucursales'));
+        $zonas = Zona::where('activo', true)
+            ->orderBy('nombre')
+            ->get();
+
+        return view('admin.usuarios.edit', compact(
+            'usuario',
+            'roles',
+            'zonas'
+        ));
     }
-
 
     public function update(Request $request, User $usuario)
     {
@@ -79,8 +93,9 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,' . $usuario->id,
             'password' => 'nullable|min:8',
             'role' => 'required|exists:roles,name',
-            'sucursales' => 'nullable|array',
-            'sucursales.*' => 'exists:sucursals,id',
+            'zonas' => 'nullable|array',
+            'zonas.*' => 'exists:zonas,id',
+
         ]);
 
         // Password opcional
@@ -93,7 +108,7 @@ class UserController extends Controller
         $data['activo'] = $request->has('activo');
 
         // ⛔ Quitamos campos que no pertenecen a users
-        unset($data['role'], $data['sucursales']);
+        unset($data['role'], $data['zonas']);
 
         $usuario->update($data);
 
@@ -101,7 +116,9 @@ class UserController extends Controller
         $usuario->syncRoles([$request->role]);
 
         // Sucursales (sync siempre, aunque venga vacío)
-        $usuario->sucursales()->sync($request->sucursales ?? []);
+        $usuario->zonas()->sync(
+            $request->input('zonas', [])
+        );
 
         return redirect()
             ->route('admin.usuarios.index')

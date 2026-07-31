@@ -34,6 +34,37 @@
                 'value' => old('ciudad')
             ])
 
+            <div>
+
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Zona
+                </label>
+
+                <select
+                    name="zona_id"
+                    class="w-full rounded-lg border-gray-300 focus:border-gray-900 focus:ring-gray-900">
+
+                    <option value="">Seleccione una zona</option>
+
+                    @foreach($zonas as $zona)
+
+                        <option
+                            value="{{ $zona->id }}"
+                            {{ old('zona_id') == $zona->id ? 'selected' : '' }}>
+
+                            {{ $zona->nombre }}
+
+                        </option>
+
+                    @endforeach
+
+                </select>
+
+                @error('zona_id')
+                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
             @include('admin.partials.textarea', [
                 'label' => 'Dirección',
                 'name' => 'direccion',

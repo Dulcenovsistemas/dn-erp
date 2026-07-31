@@ -51,9 +51,9 @@ class User extends Authenticatable
         ];
     }
 
-    public function sucursales()
+    public function zonas()
     {
-        return $this->belongsToMany(Sucursal::class);
+        return $this->belongsToMany(Zona::class);
     }
 
     public function pedidos()

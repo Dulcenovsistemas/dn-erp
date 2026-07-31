@@ -74,26 +74,33 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Sucursales asignadas
+                    Zonas asignadas
                 </label>
 
                 <div class="grid grid-cols-2 gap-3">
-                    @foreach ($sucursales as $sucursal)
+                    @foreach ($zonas as $zona)
                         <label class="flex items-center gap-2 text-sm">
-                            <input type="checkbox"
-                                name="sucursales[]"
-                                value="{{ $sucursal->id }}"
+
+                            <input
+                                type="checkbox"
+                                name="zonas[]"
+                                value="{{ $zona->id }}"
                                 class="rounded border-gray-300"
-                                {{ in_array($sucursal->id, old(
-                                        'sucursales',
-                                        $usuario->sucursales->pluck('id')->toArray()
-                                )) ? 'checked' : '' }}>
-                            {{ $sucursal->nombre }}
+
+                                {{ in_array(
+                                    $zona->id,
+                                    old(
+                                        'zonas',
+                                        $usuario->zonas->pluck('id')->toArray()
+                                    )
+                                ) ? 'checked' : '' }}>
+
+                            {{ $zona->nombre }}
+
                         </label>
                     @endforeach
                 </div>
             </div>
-
 
             {{-- Activo --}}
             @include('admin.partials.checkbox', [

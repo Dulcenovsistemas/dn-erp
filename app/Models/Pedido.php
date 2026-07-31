@@ -8,7 +8,7 @@ class Pedido extends Model
 {
     protected $fillable = [
         'folio',
-        'sucursal_id',
+        'zona_id',
         'user_id',
         'fecha_pedido',
         'fecha_entrega',
@@ -21,9 +21,9 @@ class Pedido extends Model
         'fecha_entrega' => 'date',
     ];
 
-    public function sucursal()
+    public function zona()
     {
-        return $this->belongsTo(Sucursal::class);
+        return $this->belongsTo(Zona::class);
     }
 
     public function usuario()

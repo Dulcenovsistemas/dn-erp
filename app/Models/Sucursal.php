@@ -27,7 +27,7 @@ class Sucursal extends Model
         )->withPivot('precio', 'stock', 'activo')
         ->withTimestamps();
     }
-
+    
     public function inventario()
     {
         return $this->belongsToMany(
@@ -48,6 +48,11 @@ class Sucursal extends Model
     public function calendarioPedidos()
     {
         return $this->hasMany(PedidoCalendario::class);
+    }
+
+    public function zona()
+    {
+        return $this->belongsTo(Zona::class);
     }
 
 }
