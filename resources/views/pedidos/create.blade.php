@@ -16,30 +16,68 @@
 
         <div class="mt-6 flex justify-end gap-3">
 
-            <button
-                class="bg-gray-600 text-white px-5 py-3 rounded-lg"
-                type="submit"
-                name="accion"
-                value="borrador">
+            <div class="mt-6 flex justify-end gap-3">
 
-                Guardar borrador
+                <button
+                    type="button"
+                    id="llenar-aleatorio"
+                    class="bg-purple-600 text-white px-5 py-3 rounded-lg hover:bg-purple-700">
 
-            </button>
+                    🎲 Llenar aleatoriamente
 
-            <button
-                class="bg-blue-600 text-white px-5 py-3 rounded-lg"
-                type="submit"
-                name="accion"
-                value="enviar">
+                </button>
 
-                Enviar pedido
+                <button
+                    class="bg-gray-600 text-white px-5 py-3 rounded-lg"
+                    type="submit"
+                    name="accion"
+                    value="borrador">
 
-            </button>
+                    Guardar borrador
+
+                </button>
+
+                <button
+                    class="bg-blue-600 text-white px-5 py-3 rounded-lg"
+                    type="submit"
+                    name="accion"
+                    value="enviar">
+
+                    Enviar pedido
+
+                </button>
+
+            </div>
 
         </div>
 
     </form>
 
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const boton = document.getElementById('llenar-aleatorio');
+
+    boton.addEventListener('click', function () {
+
+        const inputs = document.querySelectorAll(
+            'input[type="number"][name^="pedido["]'
+        );
+
+        inputs.forEach(input => {
+
+            // Entre 0 y 10
+            const cantidad = Math.floor(Math.random() * 11);
+
+            input.value = cantidad;
+
+        });
+
+    });
+
+});
+</script>
 
 @endsection

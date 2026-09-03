@@ -9,13 +9,29 @@ use Illuminate\Http\Request;
 
 class ProductoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $productos = Producto::with('categoria')
+        // Categorías activas para las burbujas
+        $categorias = Categoria::where('activo', 1)
             ->orderBy('nombre')
             ->get();
 
-        return view('admin.productos.index', compact('productos'));
+        // Consulta de productos
+        $query = Producto::with('categoria');
+
+        // Filtrar por categoría si se seleccionó una
+        if ($request->filled('categoria')) {
+            $query->where('categoria_id', $request->categoria);
+        }
+
+        $productos = $query
+            ->orderBy('nombre')
+            ->get();
+
+        return view('admin.productos.index', compact(
+            'productos',
+            'categorias'
+        ));
     }
 
     public function create()

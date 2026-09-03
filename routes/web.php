@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\OrdenVentaGastosController;
 use App\Http\Controllers\Admin\CorteController;
 use App\Http\Controllers\Admin\RemisionController;
 use App\Http\Controllers\Admin\MovimientoInventarioController;
+use App\Http\Controllers\PedidoGlobalController;
 use App\Http\Controllers\PedidoController;
 use App\Livewire\OrdenVentaGastos;
 
@@ -138,6 +139,21 @@ Route::middleware(['auth', 'role:admin|fabrica|Ventas mostrador'])
             
 
         Route::resource('pedidos', PedidoController::class);
+
+        Route::get('pedidos-globales', [PedidoController::class, 'globales'])
+            ->name('pedidos.globales');
+
+        Route::get('pedidos-globales/{pedidoGlobal}', [PedidoController::class, 'globalesShow'])
+            ->name('pedidos.globales.show');
+
+
+        Route::post('/pedidos-globales/generar', [PedidoGlobalController::class, 'generar'])
+            ->name('pedidos-globales.generar');
+
+        Route::post(
+                    '/pedidos-globales/generar',
+                    [PedidoGlobalController::class, 'generar']
+                )->name('pedidos.globales.generar');
 
     });
 

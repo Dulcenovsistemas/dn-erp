@@ -31,6 +31,7 @@
         <tbody>
 
             @foreach($categoria->productos as $producto)
+            
 
                 <tr class="border-t">
 

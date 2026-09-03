@@ -4,7 +4,7 @@
 
 </h2>
 
-@foreach($categorias as $categoria)
+@foreach($categorias->sortBy('nombre') as $categoria)
 
     @include('pedidos.partials.categoria',[
         'categoria'=>$categoria,

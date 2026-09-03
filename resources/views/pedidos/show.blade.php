@@ -6,7 +6,10 @@
 
 <div class="max-w-7xl mx-auto">
 
-    {{-- Encabezado --}}
+    {{-- ========================================================= --}}
+    {{-- ENCABEZADO --}}
+    {{-- ========================================================= --}}
+
     <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
 
         <div class="flex justify-between items-start">
@@ -23,18 +26,26 @@
 
             </div>
 
+
+            {{-- Estatus --}}
             <span class="px-3 py-1 rounded-full text-sm
-                @if($pedido->estatus=='borrador')
+
+                @if($pedido->estatus == 'borrador')
                     bg-gray-200 text-gray-700
-                @elseif($pedido->estatus=='enviado')
+
+                @elseif($pedido->estatus == 'enviado')
                     bg-blue-100 text-blue-700
-                @elseif($pedido->estatus=='preparacion')
+
+                @elseif($pedido->estatus == 'preparacion')
                     bg-yellow-100 text-yellow-700
-                @elseif($pedido->estatus=='entregado')
+
+                @elseif($pedido->estatus == 'entregado')
                     bg-green-100 text-green-700
+
                 @else
                     bg-red-100 text-red-700
-                @endif">
+                @endif
+            ">
 
                 {{ ucfirst($pedido->estatus) }}
 
@@ -44,11 +55,17 @@
 
     </div>
 
-    {{-- Datos generales --}}
+
+    {{-- ========================================================= --}}
+    {{-- DATOS GENERALES --}}
+    {{-- ========================================================= --}}
+
     <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
 
         <div class="grid grid-cols-4 gap-6">
 
+
+            {{-- Zona --}}
             <div>
 
                 <label class="text-sm text-gray-500">
@@ -61,6 +78,8 @@
 
             </div>
 
+
+            {{-- Usuario --}}
             <div>
 
                 <label class="text-sm text-gray-500">
@@ -73,6 +92,8 @@
 
             </div>
 
+
+            {{-- Fecha pedido --}}
             <div>
 
                 <label class="text-sm text-gray-500">
@@ -85,6 +106,8 @@
 
             </div>
 
+
+            {{-- Fecha entrega --}}
             <div>
 
                 <label class="text-sm text-gray-500">
@@ -99,6 +122,8 @@
 
         </div>
 
+
+        {{-- Observaciones --}}
         @if($pedido->observaciones)
 
             <div class="mt-6">
@@ -117,116 +142,262 @@
 
     </div>
 
+
+    {{-- ========================================================= --}}
+    {{-- PREPARAR LOS DÍAS --}}
+    {{-- ========================================================= --}}
+
     @php
 
-        $dias = $pedido->detalles->groupBy('fecha');
+        $dias = $pedido->detalles
+            ->sortBy('fecha')
+            ->groupBy('fecha')
+            ->values();
+
+        $primerDia = 0;
 
     @endphp
 
-    @php
-    $dias = $pedido->detalles
-        ->sortBy('fecha')
-        ->groupBy('fecha');
-@endphp
 
-@foreach($dias as $fecha => $detalles)
+    {{-- ========================================================= --}}
+    {{-- PEDIDO POR DÍAS --}}
+    {{-- ========================================================= --}}
 
-<div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
 
-    <h2 class="text-xl font-bold mb-6">
-        {{ \Carbon\Carbon::parse($fecha)->translatedFormat('l d \d\e F') }}
-    </h2>
 
-    @php
+        {{-- ===================================================== --}}
+        {{-- PESTAÑAS --}}
+        {{-- ===================================================== --}}
 
-        $categorias = $detalles->groupBy(function ($detalle) {
-            return $detalle->producto->categoria->nombre;
-        });
+        <div class="border-b border-gray-200 mb-6">
 
-    @endphp
+            <div class="flex gap-1 overflow-x-auto">
 
-    @foreach($categorias as $nombreCategoria => $itemsCategoria)
+                @foreach($dias as $indice => $detalles)
 
-        <div class="mb-8 border rounded-lg overflow-hidden">
+                    @php
 
-            <div class="bg-pink-300 px-4 py-2 font-bold">
-                {{ strtoupper($nombreCategoria) }}
-            </div>
+                        $fecha = $detalles->first()->fecha;
 
-            <table class="w-full">
+                        $fechaCarbon = \Carbon\Carbon::parse($fecha);
 
-                <thead class="bg-gray-100">
+                    @endphp
 
-                    <tr>
 
-                        <th class="text-left p-3">
-                            Producto
-                        </th>
+                    <button
+                        type="button"
+                        onclick="mostrarDia({{ $indice }})"
+                        id="tab-{{ $indice }}"
 
-                        <th class="text-center p-3">
-                            Variante
-                        </th>
+                        class="tab-dia px-5 py-3 text-sm font-semibold whitespace-nowrap border-b-2 transition
 
-                        <th class="text-center p-3">
-                            Cantidad
-                        </th>
+                            {{ $indice === $primerDia
 
-                    </tr>
+                                ? 'border-pink-500 text-pink-600'
 
-                </thead>
+                                : 'border-transparent text-gray-500 hover:text-gray-700'
 
-                <tbody>
+                            }}
+                        "
+                    >
 
-                @foreach(
-                    $itemsCategoria
-                        ->groupBy('producto_id')
-                    as $productoId => $itemsProducto
-                )
+                        {{ $fechaCarbon->translatedFormat('D d') }}
 
-                    @foreach($itemsProducto as $detalle)
-
-                        <tr class="border-t">
-
-                            <td class="p-3">
-
-                                {{ $detalle->producto->nombre }}
-
-                            </td>
-
-                            <td class="text-center">
-
-                                {{ $detalle->variante->nombre }}
-
-                            </td>
-
-                            <td class="text-center font-semibold">
-
-                                {{ $detalle->cantidad }}
-
-                            </td>
-
-                        </tr>
-
-                    @endforeach
+                    </button>
 
                 @endforeach
 
-                </tbody>
-
-            </table>
+            </div>
 
         </div>
 
-    @endforeach
 
-</div>
+        {{-- ===================================================== --}}
+        {{-- CONTENIDO DE CADA DÍA --}}
+        {{-- ===================================================== --}}
 
-@endforeach
+        @foreach($dias as $indice => $detalles)
+
+            @php
+
+                $fecha = $detalles->first()->fecha;
+
+                $fechaCarbon = \Carbon\Carbon::parse($fecha);
+
+
+                $categorias = $detalles
+                    ->groupBy(function ($detalle) {
+
+                        return $detalle->producto->categoria->nombre;
+
+                    });
+
+
+                // Total de piezas del día
+                $totalDia = $detalles->sum('cantidad');
+
+            @endphp
+
+
+            <div
+                id="dia-{{ $indice }}"
+                class="contenido-dia {{ $indice !== $primerDia ? 'hidden' : '' }}"
+            >
+
+
+                {{-- ================================================= --}}
+                {{-- ENCABEZADO DEL DÍA --}}
+                {{-- ================================================= --}}
+
+                <div class="flex justify-between items-center mb-6">
+
+                    <div>
+
+                        <h2 class="text-xl font-bold text-gray-800">
+
+                            {{ $fechaCarbon->translatedFormat('l d \d\e F') }}
+
+                        </h2>
+
+                        <p class="text-sm text-gray-500 mt-1">
+                            Pedido correspondiente a este día
+                        </p>
+
+                    </div>
+
+
+                    {{-- Total del día --}}
+                    <div class="text-right">
+
+                        <p class="text-sm text-gray-500">
+                            Total del día
+                        </p>
+
+                        <p class="text-2xl font-bold text-pink-600">
+                            {{ $totalDia }}
+                        </p>
+
+                        <p class="text-xs text-gray-400">
+                            piezas
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                {{-- ================================================= --}}
+                {{-- CATEGORÍAS --}}
+                {{-- ================================================= --}}
+
+                @foreach($categorias as $nombreCategoria => $itemsCategoria)
+
+
+                    <div class="mb-8 border rounded-lg overflow-hidden">
+
+
+                        {{-- Nombre categoría --}}
+                        <div class="bg-pink-300 px-4 py-2 font-bold">
+
+                            {{ strtoupper($nombreCategoria) }}
+
+                        </div>
+
+
+                        {{-- Tabla --}}
+                        <div class="overflow-x-auto">
+
+                            <table class="w-full">
+
+                                <thead class="bg-gray-100">
+
+                                    <tr>
+
+                                        <th class="text-left p-3">
+                                            Producto
+                                        </th>
+
+                                        <th class="text-center p-3">
+                                            Variante
+                                        </th>
+
+                                        <th class="text-center p-3">
+                                            Cantidad
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
+
+
+                                <tbody>
+
+
+                                    @foreach($itemsCategoria as $detalle)
+
+                                        <tr class="border-t">
+
+
+                                            {{-- Producto --}}
+                                            <td class="p-3 font-medium">
+
+                                                {{ $detalle->producto->nombre }}
+
+                                            </td>
+
+
+                                            {{-- Variante --}}
+                                            <td class="text-center p-3">
+
+                                                {{ $detalle->variante->nombre }}
+
+                                            </td>
+
+
+                                            {{-- Cantidad --}}
+                                            <td class="text-center p-3 font-semibold">
+
+                                                {{ $detalle->cantidad }}
+
+                                            </td>
+
+
+                                        </tr>
+
+                                    @endforeach
+
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+
+                @endforeach
+
+
+            </div>
+
+        @endforeach
+
+
+    </div>
+
+
+    {{-- ========================================================= --}}
+    {{-- BOTÓN REGRESAR --}}
+    {{-- ========================================================= --}}
 
     <div class="flex justify-end">
 
-        <a href="{{ route('admin.pedidos.index') }}"
-           class="px-5 py-2 bg-gray-900 text-white rounded-lg">
+        <a
+            href="{{ route('admin.pedidos.index') }}"
+            class="px-5 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition"
+        >
 
             Regresar
 
@@ -234,6 +405,95 @@
 
     </div>
 
+
 </div>
+
+
+{{-- ============================================================= --}}
+{{-- JAVASCRIPT DE LAS PESTAÑAS --}}
+{{-- ============================================================= --}}
+
+<script>
+
+    function mostrarDia(indice) {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Ocultar todos los días
+        |--------------------------------------------------------------------------
+        */
+
+        document
+            .querySelectorAll('.contenido-dia')
+            .forEach(function(elemento) {
+
+                elemento.classList.add('hidden');
+
+            });
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Mostrar el día seleccionado
+        |--------------------------------------------------------------------------
+        */
+
+        const contenido = document.getElementById('dia-' + indice);
+
+        if (contenido) {
+
+            contenido.classList.remove('hidden');
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Restaurar estilo de todas las pestañas
+        |--------------------------------------------------------------------------
+        */
+
+        document
+            .querySelectorAll('.tab-dia')
+            .forEach(function(tab) {
+
+                tab.classList.remove(
+                    'border-pink-500',
+                    'text-pink-600'
+                );
+
+                tab.classList.add(
+                    'border-transparent',
+                    'text-gray-500'
+                );
+
+            });
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Activar pestaña seleccionada
+        |--------------------------------------------------------------------------
+        */
+
+        const tabActivo = document.getElementById('tab-' + indice);
+
+        if (tabActivo) {
+
+            tabActivo.classList.remove(
+                'border-transparent',
+                'text-gray-500'
+            );
+
+            tabActivo.classList.add(
+                'border-pink-500',
+                'text-pink-600'
+            );
+
+        }
+
+    }
+
+</script>
 
 @endsection

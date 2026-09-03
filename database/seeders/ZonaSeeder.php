@@ -10,10 +10,13 @@ class ZonaSeeder extends Seeder
     public function run(): void
     {
         $zonas = [
-            'Chihuahua',
-            'Juarez',
+            'CUU Renato',
+            'JUA Renato',
             'Cuauhtemoc',
-            'Zona Sur',
+            'Delicias',
+            'Parral',
+            'Camargo',
+            'Meoqui',
         ];
 
         foreach ($zonas as $nombre) {

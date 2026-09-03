@@ -26,11 +26,23 @@
 
         </div>
 
-       @php
+    @php
     use Carbon\Carbon;
 
-    $inicioSemana = Carbon::now()->startOfWeek(Carbon::THURSDAY);
-    $finSemana = $inicioSemana->copy()->addDays(6);
+    $hoy = Carbon::today();
+
+    // Encontrar el próximo jueves (o hoy si hoy es jueves)
+    $fechaLimite = $hoy->copy();
+
+    if (!$hoy->isThursday()) {
+        $fechaLimite = $hoy->next(Carbon::THURSDAY);
+    }
+
+    // El pedido corresponde al lunes siguiente
+    $inicioSemana = $fechaLimite->copy()->addDays(4);
+
+    // Y termina el sábado
+    $finSemana = $fechaLimite->copy()->addDays(9);
 @endphp
 
 <div>

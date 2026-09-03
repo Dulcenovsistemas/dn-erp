@@ -151,12 +151,13 @@
             </div>
         </div>
 
-
         {{-- Card Administración --}}
         <div class="bg-white rounded-xl shadow-sm p-6">
+
             <h2 class="text-lg font-semibold text-gray-800 mb-1">
                 Pedidos
             </h2>
+
             <p class="text-sm text-gray-500 mb-4">
                 Gestión general de pedidos
             </p>
@@ -164,22 +165,42 @@
             <div class="space-y-2">
 
                 @hasanyrole('admin|fabrica')
+
+                {{-- Nuevo pedido --}}
                 <a href="{{ route('admin.pedidos.index') }}"
-                   class="flex items-center justify-between px-4 py-2 rounded-lg border hover:bg-gray-50 transition">
+                class="flex items-center justify-between px-4 py-2 rounded-lg border hover:bg-gray-50 transition">
+
                     <span class="text-sm text-gray-700">
                         Nuevo pedido
                     </span>
-                    <span class="text-gray-400">→</span>
+
+                    <span class="text-gray-400">
+                        →
+                    </span>
+
                 </a>
+
+
+                {{-- Pedidos globales --}}
+                <a href="{{ route('admin.pedidos.globales') }}"
+                class="flex items-center justify-between px-4 py-2 rounded-lg border hover:bg-gray-50 transition">
+
+                    <span class="text-sm text-gray-700">
+                        Pedidos globales
+                    </span>
+
+                    <span class="text-gray-400">
+                        →
+                    </span>
+
+                </a>
+
                 @endhasanyrole
 
-                
-
             </div>
+
         </div>
-
     </div>
-
 </div>
 
 @endsection

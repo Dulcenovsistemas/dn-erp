@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\Pedido;
 use App\Models\PedidoDetalle;
+use App\Models\PedidoGlobal;
 
 class PedidoController extends Controller
 {
@@ -67,8 +68,8 @@ class PedidoController extends Controller
                 'observaciones'    => $request->observaciones,
             ]);
 
-            // El índice 0 del formulario corresponde al jueves
-            $fecha = Carbon::now()->startOfWeek(Carbon::THURSDAY);
+            // La fecha base es el lunes de la semana de entrega
+            $fecha = Carbon::now()->next(Carbon::MONDAY);
 
             foreach ($request->pedido as $dia => $productos) {
 
@@ -91,13 +92,9 @@ class PedidoController extends Controller
                             'fecha'                => $fechaDia->toDateString(),
                             'cantidad'             => $cantidad,
                         ]);
-
                     }
-
                 }
-
             }
-
 
 
 
@@ -131,7 +128,80 @@ class PedidoController extends Controller
         return view('pedidos.show', compact('pedido'));
     }
 
+    public function globales()
+    {
+        $pedidosGlobales = PedidoGlobal::orderBy('fecha_inicio', 'desc')
+            ->get();
 
+        return view('pedidos.globales.index', compact('pedidosGlobales'));
+    }
+
+
+    public function globalesShow(PedidoGlobal $pedidoGlobal)
+    {
+        $inicioSemana = $pedidoGlobal->fecha_inicio->copy()->startOfDay();
+        $finSemana = $pedidoGlobal->fecha_fin->copy()->endOfDay();
+
+        $zonas = \App\Models\Zona::orderBy('nombre')->get();
+
+        $pedidos = Pedido::with([
+            'zona',
+            'detalles.producto.categoria',
+            'detalles.variante',
+        ])
+        ->where('estatus', 'enviado')
+        ->whereDate('fecha_entrega', '>=', $inicioSemana->toDateString())
+        ->whereDate('fecha_entrega', '<=', $finSemana->toDateString())
+        ->get();
+
+        $resumen = [];
+
+        foreach ($pedidos as $pedido) {
+
+            foreach ($pedido->detalles as $detalle) {
+
+                $productoId = $detalle->producto_id;
+                $varianteId = $detalle->producto_variante_id;
+                $zonaId = $pedido->zona_id;
+
+                $clave = $productoId . '-' . $varianteId;
+
+                if (!isset($resumen[$clave])) {
+
+                    $resumen[$clave] = [
+                        'categoria' => $detalle->producto->categoria->nombre,
+                        'producto' => $detalle->producto->nombre,
+                        'variante' => $detalle->variante->nombre,
+                        'zonas' => [],
+                        'total' => 0,
+                    ];
+                }
+
+                if (!isset($resumen[$clave]['zonas'][$zonaId])) {
+                    $resumen[$clave]['zonas'][$zonaId] = 0;
+                }
+
+                $resumen[$clave]['zonas'][$zonaId] += $detalle->cantidad;
+
+                $resumen[$clave]['total'] += $detalle->cantidad;
+            }
+        }
+
+        $resumen = collect($resumen)
+            ->sortBy([
+                ['producto', 'asc'],
+                ['variante', 'asc'],
+            ])
+            ->values();
+
+        return view('pedidos.globales.show', compact(
+            'pedidoGlobal',
+            'resumen',
+            'zonas',
+            'inicioSemana',
+            'finSemana'
+        ));
+    }
 
     /**
      * Show the form for editing the specified resource.
@@ -152,8 +222,19 @@ class PedidoController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Pedido $pedido)
     {
-        //
+        DB::transaction(function () use ($pedido) {
+
+            // Eliminar los detalles del pedido
+            $pedido->detalles()->delete();
+
+            // Eliminar el pedido
+            $pedido->delete();
+        });
+
+        return redirect()
+            ->route('admin.pedidos.index')
+            ->with('success', 'Pedido eliminado correctamente.');
     }
 }
