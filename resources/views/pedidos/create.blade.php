@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function () {
         inputs.forEach(input => {
 
             // Entre 0 y 10
-            const cantidad = Math.floor(Math.random() * 11);
+            const cantidad = Math.floor(Math.random() * 3);
 
             input.value = cantidad;
 
