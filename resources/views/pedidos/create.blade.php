@@ -18,15 +18,34 @@
 
             <div class="mt-6 flex justify-end gap-3">
 
-                <button
-                    type="button"
-                    id="llenar-aleatorio"
-                    class="bg-purple-600 text-white px-5 py-3 rounded-lg hover:bg-purple-700">
+               {{-- Botones flotantes --}}
+                <div class="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
 
-                    🎲 Llenar aleatoriamente
+                    {{-- Llenado aleatorio --}}
+                    <button
+                        type="button"
+                        id="llenar-aleatorio"
+                        class="bg-purple-600 text-white px-5 py-3 rounded-full shadow-lg
+                            hover:bg-purple-700 transition-all duration-200
+                            hover:scale-105">
 
-                </button>
+                        🎲 Llenar aleatoriamente
 
+                    </button>
+
+                    {{-- Limpiar --}}
+                    <button
+                        type="button"
+                        id="limpiar-pedido"
+                        class="bg-red-500 text-white px-5 py-3 rounded-full shadow-lg
+                            hover:bg-red-600 transition-all duration-200
+                            hover:scale-105">
+
+                        🧹 Limpiar
+
+                    </button>
+
+                </div>
                 <button
                     class="bg-gray-600 text-white px-5 py-3 rounded-lg"
                     type="submit"
@@ -58,21 +77,33 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    const boton = document.getElementById('llenar-aleatorio');
+    const botonAleatorio = document.getElementById('llenar-aleatorio');
+    const botonLimpiar = document.getElementById('limpiar-pedido');
 
-    boton.addEventListener('click', function () {
+    const inputs = document.querySelectorAll(
+        'input[type="number"][name^="pedido["]'
+    );
 
-        const inputs = document.querySelectorAll(
-            'input[type="number"][name^="pedido["]'
-        );
+    // Llenado aleatorio
+    botonAleatorio.addEventListener('click', function () {
 
         inputs.forEach(input => {
 
-            // Entre 0 y 10
-            const cantidad = Math.floor(Math.random() * 3);
+            // Entre 1 y 2 piezas
+            const cantidad = Math.floor(Math.random() * 2) + 1;
 
             input.value = cantidad;
 
+        });
+
+    });
+
+
+    // Limpiar todo
+    botonLimpiar.addEventListener('click', function () {
+
+        inputs.forEach(input => {
+            input.value = 0;
         });
 
     });
