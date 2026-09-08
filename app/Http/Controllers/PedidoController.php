@@ -121,11 +121,26 @@ class PedidoController extends Controller
         $pedido->load([
             'zona',
             'usuario',
+            'detalles',
             'detalles.producto',
             'detalles.variante',
         ]);
 
-        return view('pedidos.show', compact('pedido'));
+        $categorias = Categoria::with([
+            'productos' => function ($q) {
+                $q->where('activo', 1)
+                    ->orderBy('nombre');
+            },
+            'productos.variantes'
+        ])
+        ->where('activo', 1)
+        ->orderBy('nombre')
+        ->get();
+
+        return view('pedidos.show', compact(
+            'pedido',
+            'categorias'
+        ));
     }
 
     public function globales()
@@ -206,17 +221,143 @@ class PedidoController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Pedido $pedido)
     {
-        //
-    }
+        $pedido->load([
+            'zona',
+            'detalles',
+            'detalles.producto',
+            'detalles.variante',
+        ]);
 
+        $categorias = Categoria::with([
+            'productos' => function ($q) {
+                $q->where('activo', 1)
+                ->orderBy('nombre');
+            },
+            'productos.variantes'
+        ])
+        ->where('activo', 1)
+        ->orderBy('nombre')
+        ->get();
+
+        return view('pedidos.edit', compact(
+            'pedido',
+            'categorias'
+        ));
+    }
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Pedido $pedido)
     {
-        //
+        $request->validate([
+            'zona_id' => 'required|exists:zonas,id',
+            'pedido' => 'required|array',
+            'observaciones' => 'nullable|string|max:500',
+        ]);
+
+        DB::transaction(function () use ($request, $pedido) {
+
+            /*
+            * ==========================================
+            * ACTUALIZAR DATOS GENERALES
+            * ==========================================
+            */
+
+            $pedido->update([
+                'zona_id' => $request->zona_id,
+                'observaciones' => $request->observaciones,
+                'estatus' => $request->accion === 'borrador'
+                    ? 'borrador'
+                    : 'enviado',
+            ]);
+
+
+            /*
+            * ==========================================
+            * ELIMINAR DETALLES ANTERIORES
+            * ==========================================
+            *
+            * Como vamos a guardar nuevamente todo el pedido,
+            * eliminamos los detalles anteriores.
+            */
+
+            $pedido->detalles()->delete();
+
+
+            /*
+            * ==========================================
+            * FECHA INICIAL
+            * ==========================================
+            *
+            * fecha_entrega corresponde al lunes
+            * de la semana del pedido.
+            */
+
+            $fecha = Carbon::parse(
+                $pedido->fecha_entrega
+            )->startOfDay();
+
+
+            /*
+            * ==========================================
+            * GUARDAR NUEVOS DETALLES
+            * ==========================================
+            */
+
+            foreach ($request->pedido as $dia => $productos) {
+
+                $fechaDia = $fecha
+                    ->copy()
+                    ->addDays((int) $dia);
+
+
+                foreach ($productos as $productoId => $presentaciones) {
+
+                    foreach ($presentaciones as $varianteId => $cantidad) {
+
+                        $cantidad = (int) $cantidad;
+
+
+                        /*
+                        * No guardamos cantidades en cero.
+                        */
+
+                        if ($cantidad <= 0) {
+                            continue;
+                        }
+
+
+                        PedidoDetalle::create([
+                            'pedido_id'            => $pedido->id,
+                            'producto_id'          => $productoId,
+                            'producto_variante_id' => $varianteId,
+                            'fecha'                => $fechaDia->toDateString(),
+                            'cantidad'             => $cantidad,
+                        ]);
+
+                    }
+
+                }
+
+            }
+
+        });
+
+
+        /*
+        * ==========================================
+        * REGRESAR AL PEDIDO
+        * ==========================================
+        */
+
+        return redirect()
+            ->route('admin.pedidos.show', $pedido)
+            ->with(
+                'success',
+                'Pedido actualizado correctamente.'
+            );
     }
 
     /**

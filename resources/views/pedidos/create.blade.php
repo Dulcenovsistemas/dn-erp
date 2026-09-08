@@ -1,114 +1,284 @@
 @extends('layouts.admin.app')
 
-@section('title','Nuevo Pedido')
+@section('title', 'Nuevo Pedido')
 
 @section('content')
 
-<div class="max-w-screen-2xl mx-auto">
+<div class="pedido-pantalla">
 
     <form action="{{ route('admin.pedidos.store') }}" method="POST">
 
         @csrf
 
+        {{-- Datos generales --}}
         @include('pedidos.partials.datos-generales')
 
-        @include('pedidos.partials.tabs')
+        {{-- Hoja de producción --}}
+        @include('pedidos.partials.tabs-table')
 
-        <div class="mt-6 flex justify-end gap-3">
 
-            <div class="mt-6 flex justify-end gap-3">
+        {{-- BOTONES INFERIORES --}}
+        <div class="pedido-acciones">
 
-               {{-- Botones flotantes --}}
-                <div class="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+            <button
+                type="submit"
+                name="accion"
+                value="borrador"
+                class="btn-borrador">
 
-                    {{-- Llenado aleatorio --}}
-                    <button
-                        type="button"
-                        id="llenar-aleatorio"
-                        class="bg-purple-600 text-white px-5 py-3 rounded-full shadow-lg
-                            hover:bg-purple-700 transition-all duration-200
-                            hover:scale-105">
+                Guardar borrador
 
-                        🎲 Llenar aleatoriamente
+            </button>
 
-                    </button>
+            <button
+                type="submit"
+                name="accion"
+                value="enviar"
+                class="btn-enviar">
 
-                    {{-- Limpiar --}}
-                    <button
-                        type="button"
-                        id="limpiar-pedido"
-                        class="bg-red-500 text-white px-5 py-3 rounded-full shadow-lg
-                            hover:bg-red-600 transition-all duration-200
-                            hover:scale-105">
+                Enviar pedido
 
-                        🧹 Limpiar
-
-                    </button>
-
-                </div>
-                <button
-                    class="bg-gray-600 text-white px-5 py-3 rounded-lg"
-                    type="submit"
-                    name="accion"
-                    value="borrador">
-
-                    Guardar borrador
-
-                </button>
-
-                <button
-                    class="bg-blue-600 text-white px-5 py-3 rounded-lg"
-                    type="submit"
-                    name="accion"
-                    value="enviar">
-
-                    Enviar pedido
-
-                </button>
-
-            </div>
+            </button>
 
         </div>
 
     </form>
 
+
+    {{-- BOTONES FLOTANTES --}}
+    <div class="pedido-flotantes">
+
+        <button
+            type="button"
+            id="llenar-aleatorio"
+            class="btn-aleatorio">
+
+            🎲 Aleatorio
+
+        </button>
+
+        <button
+            type="button"
+            id="limpiar-pedido"
+            class="btn-limpiar">
+
+            🧹 Limpiar
+
+        </button>
+
+    </div>
+
 </div>
 
+
 <script>
+
 document.addEventListener('DOMContentLoaded', function () {
 
-    const botonAleatorio = document.getElementById('llenar-aleatorio');
-    const botonLimpiar = document.getElementById('limpiar-pedido');
+    const botonAleatorio =
+        document.getElementById('llenar-aleatorio');
+
+    const botonLimpiar =
+        document.getElementById('limpiar-pedido');
 
     const inputs = document.querySelectorAll(
         'input[type="number"][name^="pedido["]'
     );
 
-    // Llenado aleatorio
+
+    // ==========================================
+    // ACTUALIZAR TOTALES
+    // ==========================================
+
+    function actualizarTotales() {
+
+        document
+            .querySelectorAll('.categoria-produccion')
+            .forEach(categoria => {
+
+                // Recorremos cada total de esta categoría
+                categoria
+                    .querySelectorAll('.total-variante')
+                    .forEach(total => {
+
+                        const columna = total.dataset.columna;
+
+                        let suma = 0;
+
+                        // Solamente inputs de ESTA categoría
+                        // y de ESTA columna
+                        categoria
+                            .querySelectorAll(
+                                `.cantidad-input[data-columna="${columna}"]`
+                            )
+                            .forEach(input => {
+
+                                suma += parseInt(input.value) || 0;
+
+                            });
+
+                        total.textContent = suma;
+
+                    });
+
+            });
+
+    }
+
+    // ==========================================
+    // LLENAR ALEATORIAMENTE
+    // ==========================================
+
     botonAleatorio.addEventListener('click', function () {
 
         inputs.forEach(input => {
 
             // Entre 1 y 2 piezas
-            const cantidad = Math.floor(Math.random() * 2) + 1;
-
-            input.value = cantidad;
+            input.value =
+                Math.floor(Math.random() * 2) + 1;
 
         });
+
+        actualizarTotales();
 
     });
 
 
-    // Limpiar todo
+    // ==========================================
+    // LIMPIAR
+    // ==========================================
+
     botonLimpiar.addEventListener('click', function () {
 
         inputs.forEach(input => {
+
             input.value = 0;
+
         });
+
+        actualizarTotales();
 
     });
 
+
+    // ==========================================
+    // ACTUALIZAR AL ESCRIBIR
+    // ==========================================
+
+    document
+        .querySelectorAll('.cantidad-input')
+        .forEach(input => {
+
+            input.addEventListener(
+                'input',
+                actualizarTotales
+            );
+
+        });
+
+
+    actualizarTotales();
+
 });
+
 </script>
+
+
+<style>
+
+/* ==========================================
+   PANTALLA
+========================================== */
+
+.pedido-pantalla {
+    width: 100%;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+
+/* ==========================================
+   ACCIONES
+========================================== */
+
+.pedido-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.btn-borrador,
+.btn-enviar {
+    border: none;
+    border-radius: 6px;
+    padding: 10px 18px;
+    color: white;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.btn-borrador {
+    background: #4b5563;
+}
+
+.btn-enviar {
+    background: #2563eb;
+}
+
+
+/* ==========================================
+   BOTONES FLOTANTES
+========================================== */
+
+.pedido-flotantes {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 9999;
+
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pedido-flotantes button {
+    border: none;
+    border-radius: 50px;
+    padding: 11px 18px;
+
+    color: white;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    box-shadow: 0 4px 12px rgba(0,0,0,.20);
+
+    transition: .2s;
+}
+
+.pedido-flotantes button:hover {
+    transform: scale(1.05);
+}
+
+.btn-aleatorio {
+    background: #7c3aed;
+}
+
+.btn-aleatorio:hover {
+    background: #6d28d9;
+}
+
+.btn-limpiar {
+    background: #ef4444;
+}
+
+.btn-limpiar:hover {
+    background: #dc2626;
+}
+
+</style>
 
 @endsection
