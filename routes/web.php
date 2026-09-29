@@ -17,6 +17,9 @@ use App\Http\Controllers\Admin\RemisionController;
 use App\Http\Controllers\Admin\MovimientoInventarioController;
 use App\Http\Controllers\PedidoGlobalController;
 use App\Http\Controllers\PedidoController;
+use App\Http\Controllers\PedidoMaximoController;
+
+
 use App\Livewire\OrdenVentaGastos;
 
 Route::get('/', function () {
@@ -140,20 +143,56 @@ Route::middleware(['auth', 'role:admin|fabrica|Ventas mostrador'])
 
         Route::resource('pedidos', PedidoController::class);
 
-        Route::get('pedidos-globales', [PedidoController::class, 'globales'])
-            ->name('pedidos.globales');
-
-        Route::get('pedidos-globales/{pedidoGlobal}', [PedidoController::class, 'globalesShow'])
-            ->name('pedidos.globales.show');
+        // ============================================================
+        // PEDIDOS GLOBALES
+        // ============================================================
 
 
-        Route::post('/pedidos-globales/generar', [PedidoGlobalController::class, 'generar'])
-            ->name('pedidos-globales.generar');
+        // ============================================================
+        // PEDIDOS GLOBALES
+        // ============================================================
 
+        // Generar pedido global
         Route::post(
-                    '/pedidos-globales/generar',
-                    [PedidoGlobalController::class, 'generar']
-                )->name('pedidos.globales.generar');
+            'pedidos-globales/generar',
+            [PedidoGlobalController::class, 'generar']
+        )->name('pedidos.globales.generar');
+
+
+        // Resource completo excepto create y store
+        Route::resource(
+            'pedidos-globales',
+            PedidoGlobalController::class
+        )
+            ->parameters([
+                'pedidos-globales' => 'pedidoGlobal'
+            ])
+            ->names('pedidos.globales')
+            ->except(['create', 'store']);
+
+        // ============================================================
+        // PEDIDOS MÁXIMOS
+        // ============================================================
+
+        Route::resource(
+            'pedidos-maximos',
+            PedidoMaximoController::class
+        )
+            ->parameters([
+                'pedidos-maximos' => 'pedidoMaximo'
+            ])
+            ->names('pedidos.maximos');
+
+
+        // PEDIDO ANTERIOR
+        Route::get(
+            'pedidos/anterior/{zona}',
+            [PedidoController::class, 'anterior']
+        )->name('pedidos.anterior');
+
+        Route::resource('pedidos', PedidoController::class);
+
+
 
     });
 

@@ -12,21 +12,39 @@
 
     /*
      * ============================================================
-     * VARIANTES PARA LOS ENCABEZADOS
+     * VARIANTES ACTIVAS DE LA CATEGORÍA
      * ============================================================
-     *
-     * Tomamos las variantes del primer producto que tenga variantes.
-     *
-     * Posición 0 = primera variante
-     * Posición 1 = segunda variante
      */
 
-    $productoReferencia = $productosActivos
-        ->first(fn ($producto) => $producto->variantes->count() > 0);
+    $variantesEncabezado = $productosActivos
+        ->flatMap(function ($producto) {
 
-    $variantesEncabezado = $productoReferencia
-        ? $productoReferencia->variantes->take(2)->values()
-        : collect();
+            return $producto->variantes
+                ->where('activo', 1);
+
+        })
+        ->unique(function ($variante) {
+
+            return strtoupper(trim($variante->nombre));
+
+        })
+        ->sortBy(function ($variante) {
+
+            $nombre = strtoupper(trim($variante->nombre));
+
+            return match ($nombre) {
+
+                'CHICO' => 1,
+                'GRANDE' => 2,
+                'TAMAÑO UNICO' => 3,
+                'TAMAÑO ÚNICO' => 3,
+
+                default => 99,
+
+            };
+
+        })
+        ->values();
 
 @endphp
 
@@ -110,9 +128,12 @@
                      * Cada producto utiliza sus propias variantes.
                      */
 
+        
+
                     $variantesProducto = $producto->variantes
-                        ->take(2)
-                        ->values();
+                    ->where('activo', 1);
+
+              
 
 
                     /*
@@ -181,15 +202,20 @@
 
                     @if(isset($variantesEncabezado[0]))
 
+                        @php
+                            $variante = $producto->variantes
+                                ->firstWhere('nombre', $variantesEncabezado[0]->nombre);
+                        @endphp
+
                         <td class="cantidad-col">
 
-                            @if(isset($variantesProducto[0]))
+                            @if($variante)
 
                                 <input
                                     type="number"
                                     min="0"
 
-                                    value="{{ $cantidades[$variantesProducto[0]->id]->cantidad ?? 0 }}"
+                                    value="{{ $cantidades[$variante->id]->cantidad ?? 0 }}"
 
                                     class="cantidad-input"
 
@@ -199,9 +225,9 @@
 
                                     data-columna="0"
 
-                                    data-variante="{{ $variantesProducto[0]->id }}"
+                                    data-variante="{{ $variante->id }}"
 
-                                    name="pedido[{{ $dia }}][{{ $producto->id }}][{{ $variantesProducto[0]->id }}]"
+                                    name="pedido[{{ $dia }}][{{ $producto->id }}][{{ $variante->id }}]"
                                 >
 
                             @endif
@@ -217,15 +243,20 @@
 
                     @if(isset($variantesEncabezado[1]))
 
+                        @php
+                            $variante = $producto->variantes
+                                ->firstWhere('nombre', $variantesEncabezado[1]->nombre);
+                        @endphp
+
                         <td class="cantidad-col">
 
-                            @if(isset($variantesProducto[1]))
+                            @if($variante)
 
                                 <input
                                     type="number"
                                     min="0"
 
-                                    value="{{ $cantidades[$variantesProducto[1]->id]->cantidad ?? 0 }}"
+                                    value="{{ $cantidades[$variante->id]->cantidad ?? 0 }}"
 
                                     class="cantidad-input"
 
@@ -235,9 +266,9 @@
 
                                     data-columna="1"
 
-                                    data-variante="{{ $variantesProducto[1]->id }}"
+                                    data-variante="{{ $variante->id }}"
 
-                                    name="pedido[{{ $dia }}][{{ $producto->id }}][{{ $variantesProducto[1]->id }}]"
+                                    name="pedido[{{ $dia }}][{{ $producto->id }}][{{ $variante->id }}]"
                                 >
 
                             @endif

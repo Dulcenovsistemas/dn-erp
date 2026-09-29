@@ -378,4 +378,41 @@ class PedidoController extends Controller
             ->route('admin.pedidos.index')
             ->with('success', 'Pedido eliminado correctamente.');
     }
+
+
+    public function anterior($zona)
+    {
+        $pedido = Pedido::with([
+            'detalles'
+        ])
+        ->where('zona_id', $zona)
+        ->orderByDesc('fecha_entrega')
+        ->orderByDesc('id')
+        ->first();
+
+        if (!$pedido) {
+            return response()->json([
+                'encontrado' => false,
+                'mensaje' => 'No existe un pedido anterior para esta zona.'
+            ]);
+        }
+
+        $detalles = $pedido->detalles->map(function ($detalle) {
+
+            return [
+                'fecha' => $detalle->fecha,
+                'producto_id' => $detalle->producto_id,
+                'producto_variante_id' => $detalle->producto_variante_id,
+                'cantidad' => $detalle->cantidad,
+            ];
+
+        });
+
+        return response()->json([
+            'encontrado' => true,
+            'pedido_id' => $pedido->id,
+            'fecha_entrega' => $pedido->fecha_entrega,
+            'detalles' => $detalles,
+        ]);
+    }
 }

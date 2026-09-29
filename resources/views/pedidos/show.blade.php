@@ -251,361 +251,447 @@
 
                 @foreach($dias as $i => $dia)
 
-                    @php
+    @php
 
-                        $fechaDia = $inicioSemana
-                            ->copy()
-                            ->addDays($i);
+        /*
+         * ============================================================
+         * FECHA DEL DÍA
+         * ============================================================
+         */
 
-                        $fechaActual = $fechaDia
-                            ->toDateString();
+        $fechaDia = $inicioSemana
+            ->copy()
+            ->addDays($i);
 
-
-                        /*
-                         * Detalles de este día
-                         */
-
-                        $detallesDia = $pedido->detalles
-                            ->filter(function ($detalle) use ($fechaActual) {
-
-                                return Carbon::parse(
-                                    $detalle->fecha
-                                )->toDateString() === $fechaActual;
-
-                            });
+        $fechaActual = $fechaDia
+            ->toDateString();
 
 
-                        $totalDia = $detallesDia
+        /*
+         * ============================================================
+         * DETALLES DEL PEDIDO PARA ESTE DÍA
+         * ============================================================
+         */
+
+        $detallesDia = $pedido->detalles
+            ->filter(function ($detalle) use ($fechaActual) {
+
+                return Carbon::parse(
+                    $detalle->fecha
+                )->toDateString() === $fechaActual;
+
+            });
+
+
+        /*
+         * ============================================================
+         * TOTAL DEL DÍA
+         * ============================================================
+         */
+
+        $totalDia = $detallesDia
+            ->sum('cantidad');
+
+    @endphp
+
+
+    <div class="pedido-dia">
+
+
+        {{-- ==========================================================
+             ENCABEZADO DÍA
+        =========================================================== --}}
+
+        <div class="pedido-dia-header">
+
+            <div class="pedido-dia-nombre">
+
+                {{ strtoupper($dia) }}
+
+            </div>
+
+            <div class="pedido-dia-fecha">
+
+                {{ $fechaDia->translatedFormat('d F') }}
+
+            </div>
+
+        </div>
+
+
+        {{-- ==========================================================
+             ZONA
+        =========================================================== --}}
+
+        <div class="pedido-sucursal">
+
+            ZONA:
+
+            <strong>
+
+                {{ $pedido->zona->nombre ?? 'SIN ZONA' }}
+
+            </strong>
+
+        </div>
+
+
+        {{-- ==========================================================
+             CATEGORÍAS
+        =========================================================== --}}
+
+        <div class="pedido-productos">
+
+
+            @foreach($categorias as $categoria)
+
+                @php
+
+                    /*
+                    * ============================================================
+                    * PRODUCTOS DE LA CATEGORÍA
+                    * ============================================================
+                    */
+
+                    $productosCategoria = $categoria->productos;
+
+
+                    /*
+                    * ============================================================
+                    * DETALLES DE ESTA CATEGORÍA PARA ESTE DÍA
+                    * ============================================================
+                    */
+
+                    $detallesCategoria = $detallesDia
+                        ->filter(function ($detalle) use ($categoria) {
+
+                            return $detalle->producto
+                                && $detalle->producto->categoria_id == $categoria->id;
+
+                        });
+
+
+                    /*
+                    * ============================================================
+                    * VARIANTES QUE DEBE MOSTRAR LA CATEGORÍA
+                    * ============================================================
+                    *
+                    * Tomamos las variantes activas.
+                    *
+                    * También conservamos una variante inactiva si ya fue
+                    * utilizada en este pedido, para no perder información
+                    * histórica.
+                    *
+                    */
+
+                    $variantes = $productosCategoria
+                        ->flatMap(function ($producto) use ($detallesCategoria) {
+
+                            return $producto->variantes
+                                ->filter(function ($variante) use (
+                                    $producto,
+                                    $detallesCategoria
+                                ) {
+
+                                    return $variante->activo
+                                        || $detallesCategoria->contains(function ($detalle) use (
+                                            $producto,
+                                            $variante
+                                        ) {
+
+                                            return
+                                                $detalle->producto_id == $producto->id
+                                                &&
+                                                $detalle->producto_variante_id == $variante->id;
+
+                                        });
+
+                                });
+
+                        })
+                        ->unique(function ($variante) {
+
+                            return strtoupper(trim($variante->nombre));
+
+                        })
+                        ->sortBy(function ($variante) {
+
+                            $nombre = strtoupper(trim($variante->nombre));
+
+                            return match ($nombre) {
+
+                                'CHICO' => 1,
+                                'GRANDE' => 2,
+                                'TAMAÑO UNICO' => 3,
+                                'TAMAÑO ÚNICO' => 3,
+
+                                default => 99,
+
+                            };
+
+                        })
+                        ->values();
+
+
+                    /*
+                    * ============================================================
+                    * TOTALES POR VARIANTE
+                    * ============================================================
+                    */
+
+                    $totalesVariantes = [];
+
+                    foreach ($variantes as $variante) {
+
+                        $nombreVariante = strtoupper(
+                            trim($variante->nombre)
+                        );
+
+                        $totalesVariantes[$nombreVariante] = $detallesCategoria
+                            ->filter(function ($detalle) use ($nombreVariante) {
+
+                                if (!$detalle->variante) {
+                                    return false;
+                                }
+
+                                return strtoupper(
+                                    trim($detalle->variante->nombre)
+                                ) === $nombreVariante;
+
+                            })
                             ->sum('cantidad');
 
+                    }
 
-                        /*
-                         * Agrupamos por categoría
-                         */
+                @endphp
 
-                        $categoriasDia = $detallesDia
-                            ->groupBy(function ($detalle) {
-
-                                return $detalle->producto
-                                    ->categoria
-                                    ->nombre ?? 'SIN CATEGORÍA';
-
-                            });
-
-                    @endphp
+                <div class="categoria-produccion">
 
 
-                    <div class="pedido-dia">
+                    {{-- ==============================================
+                         CATEGORÍA
+                    =============================================== --}}
+
+                    <div class="categoria-header">
+
+                        {{ strtoupper($categoria->nombre) }}
+
+                    </div>
 
 
-                        {{-- ==========================================
-                             ENCABEZADO DÍA
-                        =========================================== --}}
+                    {{-- ==============================================
+                         TABLA
+                    =============================================== --}}
 
-                        <div class="pedido-dia-header">
+                    <table class="tabla-categoria">
 
-                            <div class="pedido-dia-nombre">
+                        <thead>
 
-                                {{ strtoupper($dia) }}
+                            <tr>
 
-                            </div>
+                                <th class="producto-col">
+                                    PRODUCTO
+                                </th>
 
-                            <div class="pedido-dia-fecha">
+                                @foreach($variantes as $variante)
 
-                                {{ $fechaDia->translatedFormat('d F') }}
+                                    <th class="variante-col">
 
-                            </div>
+                                        {{ strtoupper($variante->nombre) }}
 
-                        </div>
+                                    </th>
 
+                                @endforeach
 
-                        {{-- ==========================================
-                             ZONA
-                        =========================================== --}}
+                            </tr>
 
-                        <div class="pedido-sucursal">
-
-                            ZONA:
-
-                            <strong>
-
-                                {{ $pedido->zona->nombre ?? 'SIN ZONA' }}
-
-                            </strong>
-
-                        </div>
+                        </thead>
 
 
-                        {{-- ==========================================
-                             CATEGORÍAS
-                        =========================================== --}}
-
-                        <div class="pedido-productos">
+                        <tbody>
 
 
-                            @forelse($categoriasDia as $nombreCategoria => $itemsCategoria)
+                            {{-- ======================================
+                                 TODOS LOS PRODUCTOS
+                            ======================================= --}}
+
+                            @foreach($productosCategoria as $producto)
 
                                 @php
 
                                     /*
-                                     * Variantes utilizadas en esta categoría
-                                     */
+                                    * ========================================================
+                                    * VARIANTES DEL PRODUCTO
+                                    * ========================================================
+                                    */
 
-                                    $variantes = $itemsCategoria
-                                        ->pluck('variante')
-                                        ->filter()
-                                        ->unique('id')
-                                        ->take(2)
-                                        ->values();
+                                    $variantesProducto = $producto->variantes;
 
 
                                     /*
-                                     * Total por variante
-                                     */
+                                    * ========================================================
+                                    * DETALLES DE ESTE PRODUCTO
+                                    * ========================================================
+                                    */
 
-                                    $totalVariante1 = isset($variantes[0])
-                                        ? $itemsCategoria
-                                            ->where(
-                                                'producto_variante_id',
-                                                $variantes[0]->id
-                                            )
-                                            ->sum('cantidad')
-                                        : 0;
-
-
-                                    $totalVariante2 = isset($variantes[1])
-                                        ? $itemsCategoria
-                                            ->where(
-                                                'producto_variante_id',
-                                                $variantes[1]->id
-                                            )
-                                            ->sum('cantidad')
-                                        : 0;
+                                    $detallesProducto = $detallesCategoria
+                                        ->where('producto_id', $producto->id);
 
                                 @endphp
 
 
-                                <div class="categoria-produccion">
+                                <tr>
 
+                                    {{-- =====================================================
+                                        PRODUCTO
+                                    ====================================================== --}}
 
-                                    {{-- ==================================
-                                         CATEGORÍA
-                                    =================================== --}}
+                                    <td class="producto-nombre">
 
-                                    <div class="categoria-header">
+                                        {{ strtoupper($producto->nombre) }}
 
-                                        {{ strtoupper($nombreCategoria) }}
+                                    </td>
 
-                                    </div>
 
+                                    {{-- =====================================================
+                                        VARIANTES
+                                    ====================================================== --}}
 
-                                    {{-- ==================================
-                                         TABLA
-                                    =================================== --}}
+                                    @foreach($variantes as $varianteEncabezado)
 
-                                    <table class="tabla-categoria">
+                                        @php
 
-                                        <thead>
+                                            /*
+                                            * Nombre de la columna actual
+                                            *
+                                            * Ejemplo:
+                                            * CHICO
+                                            * GRANDE
+                                            * TAMAÑO UNICO
+                                            */
 
-                                            <tr>
+                                            $nombreEncabezado = strtoupper(
+                                                trim($varianteEncabezado->nombre)
+                                            );
 
-                                                <th class="producto-col">
 
-                                                    PRODUCTO
+                                            /*
+                                            * Buscar la variante REAL de este producto
+                                            * por nombre y NO por posición.
+                                            */
 
-                                                </th>
+                                            $varianteProducto = $variantesProducto
+                                                ->first(function ($variante) use (
+                                                    $nombreEncabezado
+                                                ) {
 
+                                                    return strtoupper(
+                                                        trim($variante->nombre)
+                                                    ) === $nombreEncabezado;
 
-                                                @if(isset($variantes[0]))
+                                                });
 
-                                                    <th class="variante-col">
 
-                                                        {{ strtoupper(
-                                                            $variantes[0]->nombre
-                                                        ) }}
+                                            /*
+                                            * Buscar la cantidad guardada para esa variante.
+                                            */
 
-                                                    </th>
+                                            $cantidad = $varianteProducto
+                                                ? $detallesProducto
+                                                    ->where(
+                                                        'producto_variante_id',
+                                                        $varianteProducto->id
+                                                    )
+                                                    ->sum('cantidad')
+                                                : 0;
 
-                                                @endif
+                                        @endphp
 
 
-                                                @if(isset($variantes[1]))
+                                        <td class="cantidad-col">
 
-                                                    <th class="variante-col">
+                                            {{ $cantidad > 0 ? $cantidad : '—' }}
 
-                                                        {{ strtoupper(
-                                                            $variantes[1]->nombre
-                                                        ) }}
+                                        </td>
 
-                                                    </th>
+                                    @endforeach
 
-                                                @endif
+                                </tr>
 
-                                            </tr>
+                            @endforeach
 
-                                        </thead>
+                            {{-- ======================================
+                                 TOTAL CATEGORÍA
+                            ======================================= --}}
 
+                            <tr class="total-categoria">
 
-                                        <tbody>
+                                <td>
+                                    TOTAL
+                                </td>
 
+                                @foreach($variantes as $variante)
 
-                                            @foreach($itemsCategoria as $detalle)
+                                    @php
 
-                                                <tr>
+                                        $nombreVariante = strtoupper(
+                                            trim($variante->nombre)
+                                        );
 
+                                    @endphp
 
-                                                    {{-- PRODUCTO --}}
+                                    <td>
 
-                                                    <td class="producto-nombre">
+                                        {{ $totalesVariantes[$nombreVariante] ?? 0 }}
 
-                                                        {{ strtoupper(
-                                                            $detalle->producto->nombre
-                                                        ) }}
+                                    </td>
 
-                                                    </td>
+                                @endforeach
 
+                            </tr>
 
-                                                    {{-- VARIANTE 1 --}}
 
-                                                    @if(isset($variantes[0]))
+                        </tbody>
 
-                                                        <td class="cantidad-col">
+                    </table>
 
-                                                            @if(
-                                                                $detalle->producto_variante_id
-                                                                ==
-                                                                $variantes[0]->id
-                                                            )
 
-                                                                {{ $detalle->cantidad }}
+                </div>
 
-                                                            @else
 
-                                                                —
+            @endforeach
 
-                                                            @endif
 
-                                                        </td>
+        </div>
 
-                                                    @endif
 
+        {{-- ==========================================================
+             TOTAL DEL DÍA
+        =========================================================== --}}
 
-                                                    {{-- VARIANTE 2 --}}
+        <div class="total-dia">
 
-                                                    @if(isset($variantes[1]))
+            <span>
+                TOTAL DEL DÍA
+            </span>
 
-                                                        <td class="cantidad-col">
+            <strong>
 
-                                                            @if(
-                                                                $detalle->producto_variante_id
-                                                                ==
-                                                                $variantes[1]->id
-                                                            )
+                {{ $totalDia }}
 
-                                                                {{ $detalle->cantidad }}
+            </strong>
 
-                                                            @else
+            <small>
+                piezas
+            </small>
 
-                                                                —
+        </div>
 
-                                                            @endif
 
-                                                        </td>
+    </div>
 
-                                                    @endif
 
-
-                                                </tr>
-
-                                            @endforeach
-
-
-                                            {{-- ==================================
-                                                 TOTAL
-                                            =================================== --}}
-
-                                            <tr class="total-categoria">
-
-                                                <td>
-
-                                                    TOTAL
-
-                                                </td>
-
-
-                                                @if(isset($variantes[0]))
-
-                                                    <td>
-
-                                                        {{ $totalVariante1 }}
-
-                                                    </td>
-
-                                                @endif
-
-
-                                                @if(isset($variantes[1]))
-
-                                                    <td>
-
-                                                        {{ $totalVariante2 }}
-
-                                                    </td>
-
-                                                @endif
-
-                                            </tr>
-
-
-                                        </tbody>
-
-                                    </table>
-
-                                </div>
-
-
-                            @empty
-
-
-                                <div class="sin-detalles">
-
-                                    SIN PRODUCCIÓN PROGRAMADA
-
-                                </div>
-
-
-                            @endforelse
-
-
-                        </div>
-
-
-                        {{-- ==========================================
-                             TOTAL DEL DÍA
-                        =========================================== --}}
-
-                        <div class="total-dia">
-
-                            <span>
-                                TOTAL DEL DÍA
-                            </span>
-
-                            <strong>
-
-                                {{ $totalDia }}
-
-                            </strong>
-
-                            <small>
-                                piezas
-                            </small>
-
-                        </div>
-
-
-                    </div>
-
-                @endforeach
+@endforeach
 
             </div>
 

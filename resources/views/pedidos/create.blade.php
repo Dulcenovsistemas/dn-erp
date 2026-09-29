@@ -66,6 +66,14 @@
 
         </button>
 
+        <button
+            type="button"
+            id="cargar-pedido-anterior"
+            class="btn-anterior"
+        >
+            ↻ Cargar pedido anterior
+        </button>
+
     </div>
 
 </div>
@@ -80,6 +88,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const botonLimpiar =
         document.getElementById('limpiar-pedido');
+
+    const botonAnterior =
+        document.getElementById('cargar-pedido-anterior');
+
+    const zonaSelect =
+        document.querySelector('[name="zona_id"]');
 
     const inputs = document.querySelectorAll(
         'input[type="number"][name^="pedido["]'
@@ -96,7 +110,6 @@ document.addEventListener('DOMContentLoaded', function () {
             .querySelectorAll('.categoria-produccion')
             .forEach(categoria => {
 
-                // Recorremos cada total de esta categoría
                 categoria
                     .querySelectorAll('.total-variante')
                     .forEach(total => {
@@ -105,8 +118,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         let suma = 0;
 
-                        // Solamente inputs de ESTA categoría
-                        // y de ESTA columna
                         categoria
                             .querySelectorAll(
                                 `.cantidad-input[data-columna="${columna}"]`
@@ -125,6 +136,134 @@ document.addEventListener('DOMContentLoaded', function () {
 
     }
 
+
+    // ==========================================
+    // CARGAR PEDIDO ANTERIOR
+    // ==========================================
+
+    if (botonAnterior) {
+
+        botonAnterior.addEventListener('click', async function () {
+
+            if (!zonaSelect || !zonaSelect.value) {
+
+                alert('Primero selecciona una zona.');
+
+                return;
+            }
+
+
+            botonAnterior.disabled = true;
+            botonAnterior.textContent = 'Cargando...';
+
+
+            try {
+
+                const response = await fetch(
+                    `/admin/pedidos/anterior/${zonaSelect.value}`
+                );
+
+                const data = await response.json();
+
+
+                if (!data.encontrado) {
+
+                    alert(data.mensaje);
+
+                    return;
+                }
+
+
+                const confirmar = confirm(
+                    `Se encontró el pedido anterior.\n\n` +
+                    `Pedido #${data.pedido_id}\n` +
+                    `Fecha: ${data.fecha_entrega}\n\n` +
+                    `¿Quieres cargar sus cantidades?`
+                );
+
+
+                if (!confirmar) {
+                    return;
+                }
+
+
+                // Primero limpiamos el pedido actual
+                inputs.forEach(input => {
+                    input.value = 0;
+                });
+
+
+                // ==========================================
+                // COPIAR CANTIDADES
+                // ==========================================
+
+                data.detalles.forEach(detalle => {
+
+                    const fecha =
+                        new Date(detalle.fecha + 'T00:00:00');
+
+                    /*
+                     * 1 = lunes
+                     * 2 = martes
+                     * ...
+                     * 7 = domingo
+                     */
+
+                    const diaSemana = fecha.getDay();
+
+                    const dia =
+                        diaSemana === 0
+                            ? 6
+                            : diaSemana - 1;
+
+
+                    const selector =
+                        `input[name="pedido[${dia}][${detalle.producto_id}][${detalle.producto_variante_id}]"]`;
+
+
+                    const input =
+                        document.querySelector(selector);
+
+
+                    if (input) {
+
+                        input.value =
+                            detalle.cantidad;
+
+                    }
+
+                });
+
+
+                actualizarTotales();
+
+
+                alert(
+                    'Pedido anterior cargado correctamente.'
+                );
+
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert(
+                    'Ocurrió un error al cargar el pedido anterior.'
+                );
+
+            } finally {
+
+                botonAnterior.disabled = false;
+                botonAnterior.textContent =
+                    '↻ Cargar pedido anterior';
+
+            }
+
+        });
+
+    }
+
+
     // ==========================================
     // LLENAR ALEATORIAMENTE
     // ==========================================
@@ -133,7 +272,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         inputs.forEach(input => {
 
-            // Entre 1 y 2 piezas
             input.value =
                 Math.floor(Math.random() * 2) + 1;
 
@@ -277,6 +415,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
 .btn-limpiar:hover {
     background: #dc2626;
+}
+
+.btn-anterior {
+    border: none;
+    border-radius: 6px;
+    padding: 10px 16px;
+    background: #0f766e;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.btn-anterior:hover {
+    background: #115e59;
+}
+
+.btn-anterior:disabled {
+    opacity: .6;
+    cursor: not-allowed;
 }
 
 </style>

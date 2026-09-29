@@ -24,9 +24,10 @@ class Producto extends Model
 
     public function variantes()
     {
-        return $this->hasMany(ProductoVariante::class);
+        return $this->hasMany(ProductoVariante::class)
+            ->where('activo', true);
     }
-
+        
     public function pedidoDetalles()
     {
         return $this->hasMany(PedidoDetalle::class);

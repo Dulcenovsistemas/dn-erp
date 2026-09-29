@@ -26,4 +26,9 @@ class Zona extends Model
     {
         return $this->hasMany(Pedido::class);
     }
+
+    public function pedidoMaximo()
+    {
+        return $this->hasOne(PedidoMaximo::class);
+    }
 }

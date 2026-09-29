@@ -171,7 +171,21 @@
                 class="flex items-center justify-between px-4 py-2 rounded-lg border hover:bg-gray-50 transition">
 
                     <span class="text-sm text-gray-700">
-                        Nuevo pedido
+                        Pedidos
+                    </span>
+
+                    <span class="text-gray-400">
+                        →
+                    </span>
+
+                </a>
+
+                {{-- Pedidos máximos --}}
+                <a href="{{ route('admin.pedidos.maximos.index') }}"
+                class="flex items-center justify-between px-4 py-2 rounded-lg border hover:bg-gray-50 transition">
+
+                    <span class="text-sm text-gray-700">
+                        Pedidos máximos
                     </span>
 
                     <span class="text-gray-400">
@@ -182,7 +196,7 @@
 
 
                 {{-- Pedidos globales --}}
-                <a href="{{ route('admin.pedidos.globales') }}"
+                <a href="{{ route('admin.pedidos.globales.index') }}"
                 class="flex items-center justify-between px-4 py-2 rounded-lg border hover:bg-gray-50 transition">
 
                     <span class="text-sm text-gray-700">
