@@ -164,7 +164,7 @@
 
             <div class="space-y-2">
 
-                @hasanyrole('admin|fabrica')
+                
 
                 {{-- Nuevo pedido --}}
                 <a href="{{ route('admin.pedidos.index') }}"
@@ -180,6 +180,7 @@
 
                 </a>
 
+                @hasanyrole('admin|fabrica')
                 {{-- Pedidos máximos --}}
                 <a href="{{ route('admin.pedidos.maximos.index') }}"
                 class="flex items-center justify-between px-4 py-2 rounded-lg border hover:bg-gray-50 transition">
