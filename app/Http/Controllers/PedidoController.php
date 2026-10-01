@@ -202,20 +202,51 @@ class PedidoController extends Controller
             }
         }
 
-        $resumen = collect($resumen)
-            ->sortBy([
-                ['producto', 'asc'],
-                ['variante', 'asc'],
-            ])
-            ->values();
+      
 
-        return view('pedidos.globales.show', compact(
-            'pedidoGlobal',
-            'resumen',
-            'zonas',
-            'inicioSemana',
-            'finSemana'
-        ));
+
+        // ============================================================
+        // TOTAL MINIS Y PANQUES
+        // ============================================================
+
+      $resumen = collect($resumen)
+    ->sortBy([
+        ['producto', 'asc'],
+        ['variante', 'asc'],
+    ])
+    ->values();
+
+
+// ============================================================
+// TOTALES
+// ============================================================
+
+$totalGeneral = $resumen->sum('total');
+
+$totalMinis = $resumen
+    ->filter(function ($fila) {
+
+        return str_contains(
+            strtoupper(trim($fila['categoria'] ?? '')),
+            'MINIS Y PANQUES'
+        );
+
+    })
+    ->sum('total');
+
+$totalSinMinis = $totalGeneral - $totalMinis;
+
+
+return view('pedidos.globales.show', compact(
+    'pedidoGlobal',
+    'resumen',
+    'zonas',
+    'inicioSemana',
+    'finSemana',
+    'totalMinis',
+    'totalSinMinis'
+));
+        
     }
 
     /**

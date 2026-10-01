@@ -2,6 +2,7 @@
 
 @section('content')
 
+
 @php
 $resumenPorCategoria = $resumen->groupBy('categoria');
 @endphp
@@ -52,13 +53,32 @@ $resumenPorCategoria = $resumen->groupBy('categoria');
 </div>
 
 
-{{-- ============================================================
-     TABLA GLOBAL
-============================================================ --}}
-<div class="bg-white rounded-xl shadow">
 
-    {{-- Barra de desplazamiento --}}
-    <div class="flex items-center justify-between px-4 py-2 bg-slate-50 border-b">
+
+
+  
+{{-- ============================================================
+     ENCABEZADO FIJO
+============================================================ --}}
+
+<div
+    id="encabezadoFijo"
+    style="
+        display: none;
+        position: fixed;
+        top: 70px;
+        z-index: 9999;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,.12);
+        overflow: hidden;
+    "
+>
+
+    {{-- Barra fija con flechas --}}
+    <div
+        class="flex items-center justify-between px-4 py-2 bg-slate-50 border-b"
+        style="height: 52px;"
+    >
 
         <div class="text-xs text-slate-500">
             Consulta todas las zonas
@@ -89,7 +109,69 @@ $resumenPorCategoria = $resumen->groupBy('categoria');
     </div>
 
 
-    {{-- Contenedor horizontal --}}
+    {{-- Encabezado de tabla clonado --}}
+    <div
+        id="encabezadoFijoInterior"
+        style="
+            overflow: hidden;
+            background: #f1f5f9;
+        "
+    >
+    </div>
+
+</div>
+
+
+{{-- ============================================================
+     TABLA GLOBAL
+============================================================ --}}
+
+<div class="bg-white rounded-xl shadow">
+
+    {{-- ========================================================
+         BARRA DE DESPLAZAMIENTO ORIGINAL
+    ========================================================= --}}
+
+    <div
+        class="flex items-center justify-between px-4 py-2 bg-slate-50 border-b"
+        style="height: 52px;"
+    >
+
+        <div class="text-xs text-slate-500">
+            Consulta todas las zonas
+        </div>
+
+
+        <div class="flex gap-2">
+
+            <button
+                type="button"
+                onclick="scrollPedidos(-1)"
+                class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 transition"
+                title="Mover hacia la izquierda"
+            >
+                ←
+            </button>
+
+
+            <button
+                type="button"
+                onclick="scrollPedidos(1)"
+                class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 transition"
+                title="Mover hacia la derecha"
+            >
+                →
+            </button>
+
+        </div>
+
+    </div>
+
+
+    {{-- ========================================================
+         CONTENEDOR HORIZONTAL
+    ========================================================= --}}
+
     <div
         id="scrollPedidos"
         class="w-full overflow-x-auto"
@@ -98,34 +180,42 @@ $resumenPorCategoria = $resumen->groupBy('categoria');
 
         <table
             class="text-sm"
-            style="min-width: max-content; width: max-content;"
+            style="
+                min-width: max-content;
+                width: max-content;
+            "
         >
-
 
             {{-- ====================================================
                  ENCABEZADO
             ==================================================== --}}
-            <thead class="bg-slate-100 border-b">
+
+            <thead
+                id="encabezadoPedidos"
+                class="bg-slate-100 border-b"
+            >
 
                 <tr>
 
-                    {{-- Producto --}}
-                   <th
-                        class="sticky left-0 z-30 bg-slate-100 text-left px-4 py-3 font-semibold text-slate-700 whitespace-nowrap"
+                    {{-- PRODUCTO --}}
+                    <th
+                        class="text-left px-4 py-3 font-semibold text-slate-700 whitespace-nowrap"
                         style="min-width: 240px;"
                     >
                         PRODUCTO
                     </th>
 
+
+                    {{-- VARIANTE --}}
                     <th
-                        class="sticky z-30 bg-slate-100 text-left px-4 py-3 font-semibold text-slate-700 whitespace-nowrap"
-                        style="left: 240px; min-width: 100px;"
+                        class="text-left px-4 py-3 font-semibold text-slate-700 whitespace-nowrap"
+                        style="min-width: 100px;"
                     >
                         VARIANTE
                     </th>
 
 
-                    {{-- Zonas --}}
+                    {{-- ZONAS --}}
                     @foreach($zonas as $zona)
 
                         <th
@@ -138,7 +228,7 @@ $resumenPorCategoria = $resumen->groupBy('categoria');
                     @endforeach
 
 
-                    {{-- Total --}}
+                    {{-- TOTAL --}}
                     <th
                         class="text-center px-4 py-3 font-semibold text-slate-800 whitespace-nowrap"
                         style="min-width: 100px;"
@@ -149,6 +239,8 @@ $resumenPorCategoria = $resumen->groupBy('categoria');
                 </tr>
 
             </thead>
+
+            {{-- AQUÍ CONTINÚA EL TBODY --}}
 
 
             {{-- ====================================================
@@ -314,120 +406,131 @@ $resumenPorCategoria = $resumen->groupBy('categoria');
             </tbody>
 
 
-            {{-- ========================================================
-            TOTAL GENERAL
-            ======================================================== --}}
-            {{-- ========================================================
-     TOTALES
-======================================================== --}}
+    
 
-@php
-    // Total de MINIS Y PANQUES
-    $totalMinis = $resumen
-        ->filter(fn ($fila) =>
-            strtoupper(trim($fila['categoria'] ?? '')) === 'MINIS Y PANQUES'
-        )
-        ->sum('total');
+        @if($resumen->isNotEmpty())
 
-    // Total general SIN MINIS Y PANQUES
-    $totalSinMinis = $resumen
-        ->filter(fn ($fila) =>
-            strtoupper(trim($fila['categoria'] ?? '')) !== 'MINIS Y PANQUES'
-        )
-        ->sum('total');
-@endphp
+            <tfoot class="bg-slate-100 border-t-2">
+                {{-- ====================================================
+    TOTAL SIN MINIS Y PANQUES
+===================================================== --}}
+<tr>
+
+    <td
+        colspan="2"
+        class="px-4 py-3 font-bold text-slate-800 whitespace-nowrap"
+    >
+        TOTAL GENERAL
+    </td>
 
 
-@if($resumen->isNotEmpty())
+    {{-- Total por zona SIN MINIS Y PANQUES --}}
+    @foreach($zonas as $zona)
 
-    <tfoot class="bg-slate-100 border-t-2">
+        @php
 
-        {{-- ====================================================
-             TOTAL SIN MINIS Y PANQUES
-        ===================================================== --}}
-        <tr>
+            // Total de la zona
+            $totalZona = $resumen->sum(
+                fn ($fila) =>
+                    $fila['zonas'][$zona->id] ?? 0
+            );
 
-            <td
-                colspan="2"
-                class="px-4 py-3 font-bold text-slate-800 whitespace-nowrap"
-            >
-                TOTAL GENERAL
-            </td>
+            // Total de Minis y Panques de esta zona
+            $totalMinisZona = $resumen
+                ->filter(fn ($fila) =>
+                    str_contains(
+                        strtoupper(trim($fila['categoria'] ?? '')),
+                        'MINIS Y PANQUES'
+                    )
+                )
+                ->sum(
+                    fn ($fila) =>
+                        $fila['zonas'][$zona->id] ?? 0
+                );
 
-            {{-- Total por zona --}}
-            @foreach($zonas as $zona)
+            // Total de la zona SIN Minis
+            $totalZonaSinMinis =
+                $totalZona - $totalMinisZona;
 
-                <td
-                    class="px-4 py-3 text-center font-bold text-slate-800 whitespace-nowrap"
-                >
-                    {{
-                        $resumen
-                            ->filter(fn ($fila) =>
-                                strtoupper(trim($fila['categoria'] ?? '')) !== 'MINIS Y PANQUES'
-                            )
-                            ->sum(
-                                fn ($fila) =>
-                                    $fila['zonas'][$zona->id] ?? 0
-                            )
-                    }}
-                </td>
-
-            @endforeach
-
-            {{-- Total general sin minis --}}
-            <td
-                class="px-4 py-3 text-center font-bold text-slate-900 whitespace-nowrap"
-            >
-                {{ $totalSinMinis }}
-            </td>
-
-        </tr>
+        @endphp
 
 
-        {{-- ====================================================
-             TOTAL MINIS Y PANQUES
-        ===================================================== --}}
-        <tr>
+        <td
+            class="px-4 py-3 text-center font-bold text-slate-800 whitespace-nowrap"
+        >
+            {{ $totalZonaSinMinis }}
+        </td>
 
-            <td
-                colspan="2"
-                class="px-4 py-3 font-bold text-slate-800 whitespace-nowrap"
-            >
-                MINIS Y PANQUES
-            </td>
+    @endforeach
 
-            {{-- Total por zona --}}
-            @foreach($zonas as $zona)
 
-                <td
-                    class="px-4 py-3 text-center font-bold text-slate-800 whitespace-nowrap"
-                >
-                    {{
-                        $resumen
-                            ->filter(fn ($fila) =>
-                                strtoupper(trim($fila['categoria'] ?? '')) === 'MINIS Y PANQUES'
-                            )
-                            ->sum(
-                                fn ($fila) =>
-                                    $fila['zonas'][$zona->id] ?? 0
-                            )
-                    }}
-                </td>
+    {{-- Total general SIN Minis --}}
+    <td
+        class="px-4 py-3 text-center font-bold text-slate-900 whitespace-nowrap"
+    >
+        {{ $totalSinMinis }}
+    </td>
 
-            @endforeach
+</tr>
 
-            {{-- Total minis --}}
-            <td
-                class="px-4 py-3 text-center font-bold text-slate-900 whitespace-nowrap"
-            >
-                {{ $totalMinis }}
-            </td>
 
-        </tr>
+                {{-- ====================================================
+                    TOTAL MINIS Y PANQUES
+                ===================================================== --}}
+                <tr>
 
-    </tfoot>
+                    <td
+                        colspan="2"
+                        class="px-4 py-3 font-bold text-slate-800 whitespace-nowrap"
+                    >
+                        MINIS Y PANQUES
+                    </td>
 
-@endif
+                    {{-- Total por zona --}}
+                    @foreach($zonas as $zona)
+
+                        <td
+                            class="px-4 py-3 text-center font-bold text-slate-800 whitespace-nowrap"
+                        >
+                            {{
+                                $resumen
+                                    ->filter(fn ($fila) =>
+                                        str_contains(
+                                            strtoupper(trim($fila['categoria'] ?? '')),
+                                            'MINIS Y PANQUES'
+                                        )
+                                    )
+                                    ->sum(
+                                        fn ($fila) =>
+                                            $fila['zonas'][$zona->id] ?? 0
+                                    )
+                            }}
+                        </td>
+
+                    @endforeach
+
+                    {{-- Total minis --}}
+                    <td
+                        class="px-4 py-3 text-center font-bold text-slate-900 whitespace-nowrap"
+                    >
+                        {{
+                            $resumen
+                                ->filter(fn ($fila) =>
+                                    str_contains(
+                                        strtoupper(trim($fila['categoria'] ?? '')),
+                                        'MINIS Y PANQUES'
+                                    )
+                                )
+                                ->sum('total')
+                        }}
+                    </td>
+
+                </tr>
+
+
+            </tfoot>
+
+        @endif
 
 
 
@@ -442,22 +545,308 @@ $resumenPorCategoria = $resumen->groupBy('categoria');
 
 <script>
 
+    /*
+     * ============================================================
+     * SCROLL HORIZONTAL CON FLECHAS
+     * ============================================================
+     */
+
     function scrollPedidos(direccion) {
 
-        const contenedor = document.getElementById('scrollPedidos');
+        const contenedor =
+            document.getElementById('scrollPedidos');
 
         if (!contenedor) {
             return;
         }
 
-        const cantidad = 500;
-
         contenedor.scrollBy({
-            left: direccion * cantidad,
+            left: direccion * 500,
             behavior: 'smooth'
         });
 
     }
+
+
+    /*
+     * ============================================================
+     * ENCABEZADO FIJO
+     * ============================================================
+     */
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const scrollPedidos =
+            document.getElementById('scrollPedidos');
+
+        const encabezado =
+            document.getElementById('encabezadoPedidos');
+
+        const encabezadoFijo =
+            document.getElementById('encabezadoFijo');
+
+        const encabezadoFijoInterior =
+            document.getElementById('encabezadoFijoInterior');
+
+
+        /*
+         * --------------------------------------------------------
+         * VALIDAR ELEMENTOS
+         * --------------------------------------------------------
+         */
+
+        if (
+            !scrollPedidos ||
+            !encabezado ||
+            !encabezadoFijo ||
+            !encabezadoFijoInterior
+        ) {
+            return;
+        }
+
+
+        /*
+         * --------------------------------------------------------
+         * TABLA ORIGINAL
+         * --------------------------------------------------------
+         */
+
+        const tablaOriginal =
+            encabezado.closest('table');
+
+        if (!tablaOriginal) {
+            return;
+        }
+
+
+        /*
+         * ========================================================
+         * CREAR TABLA DEL ENCABEZADO FIJO
+         * ========================================================
+         */
+
+        const tablaFija =
+            document.createElement('table');
+
+        tablaFija.className = 'text-sm';
+
+        tablaFija.style.borderCollapse =
+            'collapse';
+
+        tablaFija.style.width =
+            tablaOriginal.offsetWidth + 'px';
+
+        tablaFija.style.minWidth =
+            tablaOriginal.offsetWidth + 'px';
+
+
+        /*
+         * Clonar solamente el THEAD
+         */
+
+        const theadClonado =
+            encabezado.cloneNode(true);
+
+        theadClonado.removeAttribute('id');
+
+
+        tablaFija.appendChild(
+            theadClonado
+        );
+
+
+        encabezadoFijoInterior.appendChild(
+            tablaFija
+        );
+
+
+        /*
+         * ========================================================
+         * IGUALAR ANCHOS DE COLUMNAS
+         * ========================================================
+         */
+
+        function igualarColumnas() {
+
+            const columnasOriginales =
+                encabezado.querySelectorAll('th');
+
+            const columnasFijas =
+                theadClonado.querySelectorAll('th');
+
+
+            columnasOriginales.forEach(
+                (columna, index) => {
+
+                    const columnaFija =
+                        columnasFijas[index];
+
+                    if (!columnaFija) {
+                        return;
+                    }
+
+
+                    const ancho =
+                        columna.getBoundingClientRect().width;
+
+
+                    columnaFija.style.width =
+                        ancho + 'px';
+
+                    columnaFija.style.minWidth =
+                        ancho + 'px';
+
+                    columnaFija.style.maxWidth =
+                        ancho + 'px';
+
+                }
+            );
+
+
+            /*
+             * Actualizar ancho total de la tabla fija
+             */
+
+            tablaFija.style.width =
+                tablaOriginal.offsetWidth + 'px';
+
+            tablaFija.style.minWidth =
+                tablaOriginal.offsetWidth + 'px';
+
+        }
+
+
+        igualarColumnas();
+
+
+        /*
+         * ========================================================
+         * POSICIÓN DEL ENCABEZADO FIJO
+         * ========================================================
+         */
+
+        function actualizarEncabezado() {
+
+            const rect =
+                encabezado.getBoundingClientRect();
+
+
+            /*
+             * El encabezado ya salió de la pantalla
+             */
+
+            if (rect.bottom <= 0) {
+
+                encabezadoFijo.style.display =
+                    'block';
+
+
+                /*
+                 * Obtener posición real
+                 * del contenedor horizontal
+                 */
+
+                const contenedorRect =
+                    scrollPedidos.getBoundingClientRect();
+
+
+                encabezadoFijo.style.left =
+                    contenedorRect.left + 'px';
+
+                encabezadoFijo.style.width =
+                    contenedorRect.width + 'px';
+
+
+                /*
+                 * Mantener el mismo ancho
+                 * que la tabla original
+                 */
+
+                tablaFija.style.width =
+                    tablaOriginal.offsetWidth + 'px';
+
+                tablaFija.style.minWidth =
+                    tablaOriginal.offsetWidth + 'px';
+
+
+                /*
+                 * Mantener sincronizado
+                 * el desplazamiento horizontal
+                 */
+
+                tablaFija.style.transform =
+                    `translateX(-${scrollPedidos.scrollLeft}px)`;
+
+            }
+
+            else {
+
+                encabezadoFijo.style.display =
+                    'none';
+
+            }
+
+        }
+
+
+        /*
+         * ========================================================
+         * SCROLL VERTICAL
+         * ========================================================
+         */
+
+        window.addEventListener(
+            'scroll',
+            actualizarEncabezado,
+            { passive: true }
+        );
+
+
+        /*
+         * ========================================================
+         * SCROLL HORIZONTAL
+         * ========================================================
+         */
+
+        scrollPedidos.addEventListener(
+            'scroll',
+            function () {
+
+                tablaFija.style.transform =
+                    `translateX(-${scrollPedidos.scrollLeft}px)`;
+
+            },
+            { passive: true }
+        );
+
+
+        /*
+         * ========================================================
+         * RESIZE
+         * ========================================================
+         */
+
+        window.addEventListener(
+            'resize',
+            function () {
+
+                igualarColumnas();
+
+                actualizarEncabezado();
+
+            }
+        );
+
+
+        /*
+         * ========================================================
+         * INICIALIZAR
+         * ========================================================
+         */
+
+        actualizarEncabezado();
+
+    });
 
 </script>
 

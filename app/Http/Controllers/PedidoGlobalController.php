@@ -245,18 +245,45 @@ public function show(PedidoGlobal $pedidoGlobal)
 
     /*
      * ============================================================
+     * TOTALES
+     * ============================================================
+     */
+
+    // Total de absolutamente todo
+    $totalGeneral = $resumen->sum('total');
+
+
+    // Total únicamente de Minis y Panques
+    $totalMinis = $resumen
+        ->filter(function ($fila) {
+
+            return str_contains(
+                strtoupper(trim($fila['categoria'] ?? '')),
+                'MINIS Y PANQUES'
+            );
+
+        })
+        ->sum('total');
+
+    // Total general SIN Minis y Panques
+    $totalSinMinis = $totalGeneral - $totalMinis;
+
+    /*
+     * ============================================================
      * ENVIAR DATOS A LA VISTA
      * ============================================================
      */
 
-    return view(
+     return view(
         'pedidos.globales.show',
         compact(
             'pedidoGlobal',
             'resumen',
             'zonas',
             'inicioSemana',
-            'finSemana'
+            'finSemana',
+            'totalMinis',
+            'totalSinMinis'
         )
     );
 }
