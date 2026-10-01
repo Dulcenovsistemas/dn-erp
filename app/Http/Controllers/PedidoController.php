@@ -210,42 +210,42 @@ class PedidoController extends Controller
         // ============================================================
 
       $resumen = collect($resumen)
-    ->sortBy([
-        ['producto', 'asc'],
-        ['variante', 'asc'],
-    ])
-    ->values();
+            ->sortBy([
+                ['producto', 'asc'],
+                ['variante', 'asc'],
+            ])
+            ->values();
 
 
-// ============================================================
-// TOTALES
-// ============================================================
+        // ============================================================
+        // TOTALES
+        // ============================================================
 
-$totalGeneral = $resumen->sum('total');
+        $totalGeneral = $resumen->sum('total');
 
-$totalMinis = $resumen
-    ->filter(function ($fila) {
+        $totalMinis = $resumen
+            ->filter(function ($fila) {
 
-        return str_contains(
-            strtoupper(trim($fila['categoria'] ?? '')),
-            'MINIS Y PANQUES'
-        );
+                return str_contains(
+                    strtoupper(trim($fila['categoria'] ?? '')),
+                    'MINIS Y PANQUES'
+                );
 
-    })
-    ->sum('total');
+            })
+            ->sum('total');
 
-$totalSinMinis = $totalGeneral - $totalMinis;
+        $totalSinMinis = $totalGeneral - $totalMinis;
 
 
-return view('pedidos.globales.show', compact(
-    'pedidoGlobal',
-    'resumen',
-    'zonas',
-    'inicioSemana',
-    'finSemana',
-    'totalMinis',
-    'totalSinMinis'
-));
+        return view('pedidos.globales.show', compact(
+            'pedidoGlobal',
+            'resumen',
+            'zonas',
+            'inicioSemana',
+            'finSemana',
+            'totalMinis',
+            'totalSinMinis'
+        ));
         
     }
 
