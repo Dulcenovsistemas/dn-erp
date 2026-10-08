@@ -248,6 +248,14 @@ $resumenPorCategoria = $resumen->groupBy('categoria');
             ==================================================== --}}
             <tbody>
 
+                @php
+                    $resumenPorCategoria = $resumenPorCategoria->sortBy(function ($filas, $categoria) {
+                        preg_match('/^\d+/', $categoria, $match);
+
+                        return isset($match[0]) ? (int) $match[0] : PHP_INT_MAX;
+                    });
+                @endphp
+
                 @forelse($resumenPorCategoria as $categoria => $filas)
 
 
