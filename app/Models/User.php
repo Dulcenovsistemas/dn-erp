@@ -66,4 +66,9 @@ class User extends Authenticatable
         return $this->hasMany(PedidoHistorial::class);
     }
 
+    public function sucursales()
+    {
+        return $this->belongsToMany(Sucursal::class);
+    }
+
 }

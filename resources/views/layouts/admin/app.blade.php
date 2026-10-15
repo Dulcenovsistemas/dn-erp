@@ -439,6 +439,49 @@
                 transition-duration: .01ms !important;
             }
         }
+
+        /* CERRAR SESIÓN */
+
+        .dn-logout {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 13px;
+
+            border: 1px solid #d1fae5;
+            border-radius: 9px;
+            background: #fff;
+            color: #047857;
+
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+
+            transition: background .2s, color .2s, border-color .2s;
+        }
+
+        .dn-logout svg {
+            width: 17px;
+            height: 17px;
+            flex-shrink: 0;
+        }
+
+        .dn-logout:hover {
+            background: #ecfdf5;
+            border-color: #a7f3d0;
+            color: #065f46;
+        }
+
+        @media (max-width: 520px) {
+            .dn-logout {
+                padding: 9px;
+            }
+
+            .dn-logout span {
+                display: none;
+            }
+        }
     </style>
 </head>
 
@@ -733,7 +776,29 @@
                             </div>
                         </div>
                     </div>
+
+                    {{-- CERRAR SESIÓN --}}
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+
+                        <button type="submit" class="dn-logout">
+                            <svg viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true">
+                                <path d="M10 17l5-5-5-5"/>
+                                <path d="M15 12H3"/>
+                                <path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"/>
+                            </svg>
+
+                            <span>Cerrar sesión</span>
+                        </button>
+                    </form>
                 </div>
+
 
             </header>
 

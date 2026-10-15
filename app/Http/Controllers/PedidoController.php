@@ -16,6 +16,8 @@ use App\Models\PedidoGlobal;
 
 class PedidoController extends Controller
 {
+    
+    
     /**
      * Display a listing of the resource.
      */
@@ -28,10 +30,10 @@ class PedidoController extends Controller
         // El administrador puede consultar todos los pedidos.
         if (!$usuario->hasRole('admin')) {
 
-            // Los demás usuarios solo ven pedidos de sus sucursales asignadas.
-            $consulta->whereHas('zona.sucursales.users', function ($query) use ($usuario) {
-                $query->where('users.id', $usuario->id);
-            });
+            // Los demás usuarios solo ven pedidos de sus zonas asignadas.
+            $zonasIds = $usuario->zonas()->pluck('zonas.id');
+
+            $consulta->whereIn('zona_id', $zonasIds);
         }
 
         $pedidos = $consulta
@@ -40,6 +42,7 @@ class PedidoController extends Controller
 
         return view('pedidos.index', compact('pedidos'));
     }
+
 
     /**
      * Show the form for creating a new resource.
