@@ -44,7 +44,7 @@ require __DIR__.'/auth.php';
 | ADMIN
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:admin|fabrica|Ventas mostrador'])
+Route::middleware(['auth', 'role:admin|pedidos|gerente'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -143,23 +143,29 @@ Route::middleware(['auth', 'role:admin|fabrica|Ventas mostrador'])
 
         Route::resource('pedidos', PedidoController::class);
 
+      
         // ============================================================
-        // PEDIDOS GLOBALES
+        // PEDIDOS INDIVIDUALES
         // ============================================================
+
+        // Pedido anterior: debe ir antes del resource
+        Route::get(
+            'pedidos/anterior/{zona}',
+            [PedidoController::class, 'anterior']
+        )->name('pedidos.anterior');
+
+        Route::resource('pedidos', PedidoController::class);
 
 
         // ============================================================
         // PEDIDOS GLOBALES
         // ============================================================
 
-        // Generar pedido global
         Route::post(
             'pedidos-globales/generar',
             [PedidoGlobalController::class, 'generar']
         )->name('pedidos.globales.generar');
 
-
-        // Resource completo excepto create y store
         Route::resource(
             'pedidos-globales',
             PedidoGlobalController::class
@@ -169,6 +175,7 @@ Route::middleware(['auth', 'role:admin|fabrica|Ventas mostrador'])
             ])
             ->names('pedidos.globales')
             ->except(['create', 'store']);
+
 
         // ============================================================
         // PEDIDOS MÁXIMOS
@@ -182,6 +189,7 @@ Route::middleware(['auth', 'role:admin|fabrica|Ventas mostrador'])
                 'pedidos-maximos' => 'pedidoMaximo'
             ])
             ->names('pedidos.maximos');
+
 
 
         // PEDIDO ANTERIOR

@@ -21,7 +21,20 @@ class PedidoController extends Controller
      */
     public function index()
     {
-        $pedidos = Pedido::with(['zona', 'usuario'])
+        $usuario = auth()->user();
+
+        $consulta = Pedido::with(['zona', 'usuario']);
+
+        // El administrador puede consultar todos los pedidos.
+        if (!$usuario->hasRole('admin')) {
+
+            // Los demás usuarios solo ven pedidos de sus sucursales asignadas.
+            $consulta->whereHas('zona.sucursales.users', function ($query) use ($usuario) {
+                $query->where('users.id', $usuario->id);
+            });
+        }
+
+        $pedidos = $consulta
             ->latest()
             ->paginate(20);
 
