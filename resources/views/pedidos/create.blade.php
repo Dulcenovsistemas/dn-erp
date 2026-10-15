@@ -366,77 +366,88 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 /* ==========================================
-   BOTONES FLOTANTES
+   ETIQUETAS LATERALES DEL PEDIDO
 ========================================== */
 
 .pedido-flotantes {
     position: fixed;
-    right: 20px;
-    bottom: 20px;
+    right: 0;
+    top: 45%;
+    transform: translateY(-50%);
     z-index: 9999;
 
     display: flex;
     flex-direction: column;
+    align-items: flex-end;
     gap: 8px;
 }
 
 .pedido-flotantes button {
     border: none;
-    border-radius: 50px;
-    padding: 11px 18px;
+    border-radius: 10px 0 0 10px;
+    padding: 12px 14px;
 
     color: white;
-
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
+    white-space: nowrap;
 
     cursor: pointer;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, .12);
 
-    box-shadow: 0 4px 12px rgba(0,0,0,.20);
-
-    transition: .2s;
+    transition: padding-right .2s ease,
+                filter .2s ease,
+                box-shadow .2s ease;
 }
 
+/* Efecto al pasar el cursor */
 .pedido-flotantes button:hover {
-    transform: scale(1.05);
+    padding-right: 22px;
+    filter: brightness(.92);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .18);
 }
 
+/* Colores */
 .btn-aleatorio {
     background: #7c3aed;
-}
-
-.btn-aleatorio:hover {
-    background: #6d28d9;
 }
 
 .btn-limpiar {
     background: #ef4444;
 }
 
-.btn-limpiar:hover {
-    background: #dc2626;
-}
-
 .btn-anterior {
-    border: none;
-    border-radius: 6px;
-    padding: 10px 16px;
     background: #0f766e;
-    color: white;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: .2s;
 }
 
-.btn-anterior:hover {
-    background: #115e59;
-}
-
-.btn-anterior:disabled {
+/* Botón deshabilitado */
+.pedido-flotantes button:disabled {
     opacity: .6;
     cursor: not-allowed;
+    box-shadow: none;
 }
+
+/* Adaptación para móviles */
+@media (max-width: 768px) {
+    .pedido-flotantes {
+        top: auto;
+        bottom: 15px;
+        right: 0;
+        transform: none;
+        gap: 6px;
+    }
+
+    .pedido-flotantes button {
+        padding: 10px 11px;
+        font-size: 11px;
+        border-radius: 8px 0 0 8px;
+    }
+
+    .pedido-flotantes button:hover {
+        padding-right: 14px;
+    }
+}
+
 
 </style>
 
