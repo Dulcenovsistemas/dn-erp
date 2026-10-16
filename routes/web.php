@@ -144,16 +144,23 @@ Route::middleware(['auth', 'role:admin|pedidos|gerente'])
         Route::resource('pedidos', PedidoController::class);
 
       
-        // ============================================================
+       // ============================================================
         // PEDIDOS INDIVIDUALES
         // ============================================================
 
-        // Pedido anterior: debe ir antes del resource
+        // Exportar pedido a Excel
+        Route::get(
+            'pedidos/{pedido}/exportar',
+            [PedidoController::class, 'exportarExcel']
+        )->name('pedidos.exportar');
+
+        // Pedido anterior
         Route::get(
             'pedidos/anterior/{zona}',
             [PedidoController::class, 'anterior']
         )->name('pedidos.anterior');
 
+        // CRUD de pedidos individuales
         Route::resource('pedidos', PedidoController::class);
 
 
@@ -199,6 +206,11 @@ Route::middleware(['auth', 'role:admin|pedidos|gerente'])
         )->name('pedidos.anterior');
 
         Route::resource('pedidos', PedidoController::class);
+
+        Route::get(
+            'pedidos/{pedido}/exportar',
+            [PedidoController::class, 'exportarExcel']
+        )->name('pedidos.exportar');
 
 
 

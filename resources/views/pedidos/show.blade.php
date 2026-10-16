@@ -716,6 +716,10 @@
 
         </a>
 
+       <a href="{{ route('admin.pedidos.exportar', $pedido) }}" class="btn-excel">
+    ↓ Exportar a Excel
+</a>
+
 
         <a
             href="{{ route('admin.pedidos.edit', $pedido) }}"
@@ -1504,6 +1508,25 @@
 
     }
 
+}
+
+
+.btn-excel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 16px;
+    border-radius: 6px;
+    background: #047857;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background .2s ease;
+}
+
+.btn-excel:hover {
+    background: #065f46;
 }
 
 </style>

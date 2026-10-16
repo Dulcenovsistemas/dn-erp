@@ -14,6 +14,9 @@ use App\Models\Pedido;
 use App\Models\PedidoDetalle;
 use App\Models\PedidoGlobal;
 
+use App\Exports\PedidoExport;
+use Maatwebsite\Excel\Facades\Excel;
+
 class PedidoController extends Controller
 {
     
@@ -461,5 +464,25 @@ class PedidoController extends Controller
             'fecha_entrega' => $pedido->fecha_entrega,
             'detalles' => $detalles,
         ]);
+    }
+
+
+    public function exportarExcel(Pedido $pedido)
+    {
+        $usuario = auth()->user();
+
+        // Respetar el acceso por zona de cada usuario.
+        if (!$usuario->hasRole('admin')) {
+            $tieneAcceso = $usuario->zonas()
+                ->where('zonas.id', $pedido->zona_id)
+                ->exists();
+
+            abort_unless($tieneAcceso, 403);
+        }
+
+        return Excel::download(
+            new PedidoExport($pedido),
+            'Pedido-' . $pedido->folio . '.xlsx'
+        );
     }
 }
