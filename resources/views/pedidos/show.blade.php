@@ -25,7 +25,8 @@
         'Miércoles',
         'Jueves',
         'Viernes',
-        'Sábado'
+        'Sábado',
+        'TOTAL SEMANAL'
     ];
 
 
@@ -249,9 +250,19 @@
                      SEIS DÍAS
                 =================================================== --}}
 
-                @foreach($dias as $i => $dia)
+             
+@foreach($dias as $i => $dia)
 
     @php
+
+        /*
+         * ============================================================
+         * IDENTIFICAR SI ES EL TOTAL SEMANAL
+         * ============================================================
+         */
+
+        $esTotalSemanal = $i === 6;
+
 
         /*
          * ============================================================
@@ -261,38 +272,67 @@
 
         $fechaDia = $inicioSemana
             ->copy()
-            ->addDays($i);
+            ->addDays(min($i, 5));
 
-        $fechaActual = $fechaDia
-            ->toDateString();
-
-
-        /*
-         * ============================================================
-         * DETALLES DEL PEDIDO PARA ESTE DÍA
-         * ============================================================
-         */
-
-        $detallesDia = $pedido->detalles
-            ->filter(function ($detalle) use ($fechaActual) {
-
-                return Carbon::parse(
-                    $detalle->fecha
-                )->toDateString() === $fechaActual;
-
-            });
+        $fechaActual = $fechaDia->toDateString();
 
 
         /*
          * ============================================================
-         * TOTAL DEL DÍA
+         * DETALLES DEL PEDIDO
          * ============================================================
          */
 
-        $totalDia = $detallesDia
-            ->sum('cantidad');
+        if ($esTotalSemanal) {
+
+            $fechaInicio = $inicioSemana->toDateString();
+
+            $fechaFin = $inicioSemana
+                ->copy()
+                ->addDays(5)
+                ->toDateString();
+
+            $detallesDia = $pedido->detalles
+                ->filter(function ($detalle) use ($fechaInicio, $fechaFin) {
+
+                    if (!$detalle->fecha) {
+                        return false;
+                    }
+
+                    $fechaDetalle = Carbon::parse(
+                        $detalle->fecha
+                    )->toDateString();
+
+                    return $fechaDetalle >= $fechaInicio
+                        && $fechaDetalle <= $fechaFin;
+
+                });
+
+        } else {
+
+            $detallesDia = $pedido->detalles
+                ->filter(function ($detalle) use ($fechaActual) {
+
+                    return $detalle->fecha
+                        && Carbon::parse(
+                            $detalle->fecha
+                        )->toDateString() === $fechaActual;
+
+                });
+
+        }
+
+
+        /*
+         * ============================================================
+         * TOTAL DEL DÍA O TOTAL SEMANAL
+         * ============================================================
+         */
+
+        $totalDia = $detallesDia->sum('cantidad');
 
     @endphp
+
 
 
     <div class="pedido-dia">
@@ -305,15 +345,13 @@
         <div class="pedido-dia-header">
 
             <div class="pedido-dia-nombre">
-
-                {{ strtoupper($dia) }}
-
+            {{ $esTotalSemanal ? 'GLOBALES' : strtoupper($dia) }}
             </div>
 
             <div class="pedido-dia-fecha">
-
-                {{ $fechaDia->translatedFormat('d F') }}
-
+                {{ $esTotalSemanal
+                    ? 'LUNES A SÁBADO'
+                    : $fechaDia->translatedFormat('d F') }}
             </div>
 
         </div>
@@ -490,7 +528,7 @@
                             <tr>
 
                                 <th class="producto-col">
-                                    PRODUCTO
+                                    {{ $esTotalSemanal ? '' : 'PRODUCTO' }}
                                 </th>
 
                                 @foreach($variantes as $variante)
@@ -514,6 +552,7 @@
                             {{-- ======================================
                                  TODOS LOS PRODUCTOS
                             ======================================= --}}
+                          
 
                             @foreach($productosCategoria as $producto)
 
@@ -547,9 +586,7 @@
                                     ====================================================== --}}
 
                                     <td class="producto-nombre">
-
                                         {{ strtoupper($producto->nombre) }}
-
                                     </td>
 
 
@@ -596,14 +633,29 @@
                                             * Buscar la cantidad guardada para esa variante.
                                             */
 
-                                            $cantidad = $varianteProducto
-                                                ? $detallesProducto
-                                                    ->where(
-                                                        'producto_variante_id',
-                                                        $varianteProducto->id
-                                                    )
-                                                    ->sum('cantidad')
-                                                : 0;
+                                            $cantidad = 0;
+
+                                                if ($varianteProducto) {
+                                                    $cantidad = $detallesProducto
+                                                        ->filter(function ($detalle) use ($esTotalSemanal, $inicioSemana) {
+                                                            if (!$esTotalSemanal) {
+                                                                return true;
+                                                            }
+
+                                                            if (!$detalle->fecha) {
+                                                                return false;
+                                                            }
+
+                                                            $fecha = Carbon::parse($detalle->fecha)->toDateString();
+
+                                                            $inicio = $inicioSemana->toDateString();
+                                                            $fin = $inicioSemana->copy()->addDays(5)->toDateString();
+
+                                                            return $fecha >= $inicio && $fecha <= $fin;
+                                                        })
+                                                        ->where('producto_variante_id', $varianteProducto->id)
+                                                        ->sum('cantidad');
+                                                }
 
                                         @endphp
 
@@ -619,6 +671,7 @@
                                 </tr>
 
                             @endforeach
+                         
 
                             {{-- ======================================
                                  TOTAL CATEGORÍA
@@ -1057,7 +1110,7 @@
     display: grid;
 
     grid-template-columns:
-        repeat(6, minmax(250px, 1fr));
+        repeat(7, minmax(250px, 1fr));
 
     min-width: 1500px;
 
