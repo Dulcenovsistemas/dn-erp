@@ -170,103 +170,136 @@ class PedidoController extends Controller
         return view('pedidos.globales.index', compact('pedidosGlobales'));
     }
 
-
-    public function globalesShow(PedidoGlobal $pedidoGlobal)
-    {
-        $inicioSemana = $pedidoGlobal->fecha_inicio->copy()->startOfDay();
-        $finSemana = $pedidoGlobal->fecha_fin->copy()->endOfDay();
-
-        $zonas = \App\Models\Zona::orderBy('nombre')->get();
-
-        $pedidos = Pedido::with([
-            'zona',
-            'detalles.producto.categoria',
-            'detalles.variante',
-        ])
-        ->where('estatus', 'enviado')
-        ->whereDate('fecha_entrega', '>=', $inicioSemana->toDateString())
-        ->whereDate('fecha_entrega', '<=', $finSemana->toDateString())
-        ->get();
-
-        $resumen = [];
-
-        foreach ($pedidos as $pedido) {
-
-            foreach ($pedido->detalles as $detalle) {
-
-                $productoId = $detalle->producto_id;
-                $varianteId = $detalle->producto_variante_id;
-                $zonaId = $pedido->zona_id;
-
-                $clave = $productoId . '-' . $varianteId;
-
-                if (!isset($resumen[$clave])) {
-
-                    $resumen[$clave] = [
-                        'categoria' => $detalle->producto->categoria->nombre,
-                        'producto' => $detalle->producto->nombre,
-                        'variante' => $detalle->variante->nombre,
-                        'zonas' => [],
-                        'total' => 0,
-                    ];
-                }
-
-                if (!isset($resumen[$clave]['zonas'][$zonaId])) {
-                    $resumen[$clave]['zonas'][$zonaId] = 0;
-                }
-
-                $resumen[$clave]['zonas'][$zonaId] += $detalle->cantidad;
-
-                $resumen[$clave]['total'] += $detalle->cantidad;
+    
+        public function globalesShow(Request $request, PedidoGlobal $pedidoGlobal)
+        {
+            // Permitir cambiar de semana desde el filtro.
+            if ($request->filled('pedido_global_id')) {
+                $pedidoGlobal = PedidoGlobal::findOrFail(
+                    $request->input('pedido_global_id')
+                );
             }
+
+            $inicioSemana = $pedidoGlobal->fecha_inicio->copy()->startOfDay();
+            $finSemana = $pedidoGlobal->fecha_fin->copy()->endOfDay();
+
+            // Todas las zonas disponibles para el selector.
+            $zonasDisponibles = \App\Models\Zona::orderBy('nombre')->get();
+
+            // Filtro de zona: "todas" o un ID específico.
+            $zonaSeleccionada = $request->input('zona_id', 'todas');
+
+            // Si se eligió una zona, la tabla solo mostrará esa zona.
+            $zonas = $zonaSeleccionada === 'todas'
+                ? $zonasDisponibles
+                : $zonasDisponibles
+                    ->where('id', (int) $zonaSeleccionada)
+                    ->values();
+
+            // Semanas disponibles para el selector.
+            $semanasDisponibles = PedidoGlobal::orderByDesc('fecha_inicio')
+                ->get();
+
+            // Pedidos enviados de la semana seleccionada.
+            $consulta = Pedido::with([
+                'zona',
+                'detalles.producto.categoria',
+                'detalles.variante',
+            ])
+                ->where('estatus', 'enviado')
+                ->whereDate('fecha_entrega', '>=', $inicioSemana->toDateString())
+                ->whereDate('fecha_entrega', '<=', $finSemana->toDateString());
+
+            // Aplicar el filtro antes de sumar las cantidades.
+            if ($zonaSeleccionada !== 'todas') {
+                $consulta->where('zona_id', (int) $zonaSeleccionada);
+            }
+
+            $pedidos = $consulta->get();
+
+            $resumen = [];
+
+            foreach ($pedidos as $pedido) {
+                foreach ($pedido->detalles as $detalle) {
+
+                    // Evitar errores si algún producto o categoría ya no existe.
+                    if (!$detalle->producto || !$detalle->producto->categoria) {
+                        continue;
+                    }
+
+                    $productoId = $detalle->producto_id;
+                    $varianteId = $detalle->producto_variante_id;
+                    $zonaId = $pedido->zona_id;
+
+                    $clave = $productoId . '-' . $varianteId;
+
+                    if (!isset($resumen[$clave])) {
+                        $resumen[$clave] = [
+                            'categoria' => $detalle->producto->categoria->nombre,
+                            'producto' => $detalle->producto->nombre,
+                            'variante' => $detalle->variante->nombre ?? 'ÚNICO',
+                            'zonas' => [],
+                            'total' => 0,
+                        ];
+                    }
+
+                    if (!isset($resumen[$clave]['zonas'][$zonaId])) {
+                        $resumen[$clave]['zonas'][$zonaId] = 0;
+                    }
+
+                    $resumen[$clave]['zonas'][$zonaId] += $detalle->cantidad;
+                    $resumen[$clave]['total'] += $detalle->cantidad;
+                }
+            }
+
+            // Ordenar por número de categoría, producto y variante.
+            $resumen = collect($resumen)
+                ->sortBy(function ($fila) {
+                    preg_match('/^(\d+)/', trim($fila['categoria'] ?? ''), $coincidencia);
+
+                    $numeroCategoria = isset($coincidencia[1])
+                        ? (int) $coincidencia[1]
+                        : 9999;
+
+                    return sprintf(
+                        '%04d|%s|%s',
+                        $numeroCategoria,
+                        mb_strtoupper($fila['producto'] ?? ''),
+                        mb_strtoupper($fila['variante'] ?? '')
+                    );
+                })
+                ->values();
+
+            // Totales de la selección actual.
+            $totalGeneral = $resumen->sum('total');
+
+            $totalMinis = $resumen
+                ->filter(function ($fila) {
+                    return str_contains(
+                        strtoupper(trim($fila['categoria'] ?? '')),
+                        'MINIS Y PANQUES'
+                    );
+                })
+                ->sum('total');
+
+            $totalSinMinis = $totalGeneral - $totalMinis;
+
+            return view('pedidos.globales.show', compact(
+                'pedidoGlobal',
+                'resumen',
+                'zonas',
+                'zonasDisponibles',
+                'semanasDisponibles',
+                'zonaSeleccionada',
+                'inicioSemana',
+                'finSemana',
+                'totalGeneral',
+                'totalMinis',
+                'totalSinMinis'
+            ));
         }
 
-      
 
-
-        // ============================================================
-        // TOTAL MINIS Y PANQUES
-        // ============================================================
-
-      $resumen = collect($resumen)
-            ->sortBy([
-                ['producto', 'asc'],
-                ['variante', 'asc'],
-            ])
-            ->values();
-
-
-        // ============================================================
-        // TOTALES
-        // ============================================================
-
-        $totalGeneral = $resumen->sum('total');
-
-        $totalMinis = $resumen
-            ->filter(function ($fila) {
-
-                return str_contains(
-                    strtoupper(trim($fila['categoria'] ?? '')),
-                    'MINIS Y PANQUES'
-                );
-
-            })
-            ->sum('total');
-
-        $totalSinMinis = $totalGeneral - $totalMinis;
-
-
-        return view('pedidos.globales.show', compact(
-            'pedidoGlobal',
-            'resumen',
-            'zonas',
-            'inicioSemana',
-            'finSemana',
-            'totalMinis',
-            'totalSinMinis'
-        ));
-        
-    }
 
     /**
      * Show the form for editing the specified resource.

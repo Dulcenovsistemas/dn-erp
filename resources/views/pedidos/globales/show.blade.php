@@ -54,6 +54,103 @@ $resumenPorCategoria = $resumen->groupBy('categoria');
 
 
 
+{{-- FILTROS DE ZONA Y SEMANA --}}
+<div class="bg-white rounded-xl shadow p-5 mb-6">
+    <form method="GET"
+          action="{{ request()->url() }}"
+          class="flex flex-wrap items-end gap-4">
+
+        <div class="flex flex-col gap-1">
+            <label for="pedido_global_id"
+                   class="text-sm font-semibold text-slate-700">
+                Semana
+            </label>
+
+            <select name="pedido_global_id"
+                    id="pedido_global_id"
+                    class="border border-slate-300 rounded-lg px-3 py-2 min-w-64">
+                @foreach($semanasDisponibles as $semana)
+                    <option value="{{ $semana->id }}"
+                        @selected($semana->id == $pedidoGlobal->id)>
+                        {{ \Carbon\Carbon::parse($semana->fecha_inicio)->format('d/m/Y') }}
+                        -
+                        {{ \Carbon\Carbon::parse($semana->fecha_fin)->format('d/m/Y') }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <label for="zona_id"
+                   class="text-sm font-semibold text-slate-700">
+                Zona
+            </label>
+
+            <select name="zona_id"
+                    id="zona_id"
+                    class="border border-slate-300 rounded-lg px-3 py-2 min-w-56">
+                <option value="todas"
+                    @selected($zonaSeleccionada === 'todas')>
+                    Todas las zonas
+                </option>
+
+                @foreach($zonasDisponibles as $zona)
+                    <option value="{{ $zona->id }}"
+                        @selected((string) $zonaSeleccionada === (string) $zona->id)>
+                        {{ $zona->nombre }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <button type="submit"
+                class="rounded-lg bg-emerald-700 hover:bg-emerald-800
+                       text-white font-semibold px-5 py-2.5 transition">
+            Aplicar filtros
+        </button>
+
+        <a href="{{ request()->url() }}"
+           class="rounded-lg border border-slate-300
+                  text-slate-700 font-semibold px-5 py-2.5">
+            Limpiar
+        </a>
+    </form>
+</div>
+
+
+{{-- INDICADORES DE PRODUCCIÓN --}}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-5">
+        <p class="text-sm font-semibold text-slate-500">
+            TOTAL DE PASTELES
+        </p>
+
+        <p class="text-3xl font-bold text-slate-900 mt-2">
+            {{ number_format($totalSinMinis) }}
+        </p>
+
+        <p class="text-sm text-slate-500 mt-1">
+            Sin minis ni panqués
+        </p>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-5">
+        <p class="text-sm font-semibold text-slate-500">
+            TOTAL DE MINIS Y PANQUÉS
+        </p>
+
+        <p class="text-3xl font-bold text-slate-900 mt-2">
+            {{ number_format($totalMinis) }}
+        </p>
+
+        <p class="text-sm text-slate-500 mt-1">
+            Producción de minis y panqués
+        </p>
+    </div>
+
+</div>
+
 
 
   
@@ -122,434 +219,99 @@ $resumenPorCategoria = $resumen->groupBy('categoria');
 </div>
 
 
-{{-- ============================================================
-     TABLA GLOBAL
-============================================================ --}}
-
-<div class="bg-white rounded-xl shadow">
-
-    {{-- ========================================================
-         BARRA DE DESPLAZAMIENTO ORIGINAL
-    ========================================================= --}}
-
-    <div
-        class="flex items-center justify-between px-4 py-2 bg-slate-50 border-b"
-        style="height: 52px;"
-    >
-
-        <div class="text-xs text-slate-500">
-            Consulta todas las zonas
-        </div>
 
 
-        <div class="flex gap-2">
-
-            <button
-                type="button"
-                onclick="scrollPedidos(-1)"
-                class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 transition"
-                title="Mover hacia la izquierda"
-            >
-                ←
-            </button>
 
 
-            <button
-                type="button"
-                onclick="scrollPedidos(1)"
-                class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 transition"
-                title="Mover hacia la derecha"
-            >
-                →
-            </button>
+<div class="bg-white rounded-xl shadow overflow-hidden">
+    <div class="w-full overflow-x-auto">
+        <table class="w-full border-collapse text-sm">
 
-        </div>
-
-    </div>
-
-
-    {{-- ========================================================
-         CONTENEDOR HORIZONTAL
-    ========================================================= --}}
-
-    <div
-        id="scrollPedidos"
-        class="w-full overflow-x-auto"
-        style="overflow-x: auto;"
-    >
-
-        <table
-            class="text-sm"
-            style="
-                min-width: max-content;
-                width: max-content;
-            "
-        >
-
-            {{-- ====================================================
-                 ENCABEZADO
-            ==================================================== --}}
-
-            <thead
-                id="encabezadoPedidos"
-                class="bg-slate-100 border-b"
-            >
-
-                <tr>
-
-                    {{-- PRODUCTO --}}
-                    <th
-                        class="text-left px-4 py-3 font-semibold text-slate-700 whitespace-nowrap"
-                        style="min-width: 240px;"
-                    >
+            <thead>
+                <tr style="background: #f08cf0;">
+                    <th class="border border-gray-400 px-3 py-2 text-left">
                         PRODUCTO
                     </th>
-
-
-                    {{-- VARIANTE --}}
-                    <th
-                        class="text-left px-4 py-3 font-semibold text-slate-700 whitespace-nowrap"
-                        style="min-width: 100px;"
-                    >
-                        VARIANTE
+                    <th class="border border-gray-400 px-3 py-2 text-center">
+                        CHICO
                     </th>
-
-
-                    {{-- ZONAS --}}
-                    @foreach($zonas as $zona)
-
-                        <th
-                            class="text-center px-4 py-3 font-semibold text-slate-700 whitespace-nowrap"
-                            style="min-width: 110px;"
-                        >
-                            {{ $zona->nombre }}
-                        </th>
-
-                    @endforeach
-
-
-                    {{-- TOTAL --}}
-                    <th
-                        class="text-center px-4 py-3 font-semibold text-slate-800 whitespace-nowrap"
-                        style="min-width: 100px;"
-                    >
-                        TOTAL
+                    <th class="border border-gray-400 px-3 py-2 text-center">
+                        GRANDE
                     </th>
-
+                    <th class="border border-gray-400 px-3 py-2 text-center">
+                        TAMAÑO ÚNICO
+                    </th>
                 </tr>
-
             </thead>
 
-            {{-- AQUÍ CONTINÚA EL TBODY --}}
-
-
-            {{-- ====================================================
-                 CUERPO
-            ==================================================== --}}
             <tbody>
-
                 @php
-                    $resumenPorCategoria = $resumenPorCategoria->sortBy(function ($filas, $categoria) {
-                        preg_match('/^\d+/', $categoria, $match);
-
-                        return isset($match[0]) ? (int) $match[0] : PHP_INT_MAX;
-                    });
+                    $resumenPorCategoria = $resumen->groupBy('categoria');
                 @endphp
 
                 @forelse($resumenPorCategoria as $categoria => $filas)
-
-
-                    {{-- ==================================================
-                         ENCABEZADO DE CATEGORÍA
-                    ================================================== --}}
-                    <tr class="bg-slate-800">
-
-                        <td
-                            colspan="{{ 3 + $zonas->count() }}"
-                            class="px-4 py-3 font-bold text-white uppercase tracking-wide"
-                        >
-
+                    <tr style="background: #f08cf0;">
+                        <td colspan="4"
+                            class="border border-gray-400 px-3 py-2 font-bold uppercase">
                             {{ $categoria }}
-
                         </td>
-
                     </tr>
 
-
-                    {{-- ==================================================
-                         PRODUCTOS
-                    ================================================== --}}
                     @foreach($filas as $fila)
-
-                        <tr class="border-b hover:bg-slate-50">
-
-
-                            {{-- Producto --}}
-                            <td
-                                class="sticky left-0 z-20 bg-white px-4 py-3 font-medium text-slate-800 whitespace-nowrap"
-                                style="min-width: 240px;"
-                            >
+                        <tr>
+                            <td class="border border-gray-400 px-3 py-2 bg-white">
                                 {{ $fila['producto'] }}
                             </td>
 
-                            <td
-                                class="sticky z-20 bg-white px-4 py-3 text-slate-600 whitespace-nowrap"
-                                style="left: 240px; min-width: 100px;"
-                            >
-                                {{ $fila['variante'] }}
+                            <td class="border border-gray-400 px-3 py-2 text-center font-bold"
+                                style="background: #b4c7e7;">
+                                {{ ($fila['variantes']['CHICO'] ?? 0) ?: '—' }}
                             </td>
 
-
-                            {{-- ==================================================
-                                 CANTIDAD POR ZONA
-                            ================================================== --}}
-                            @foreach($zonas as $zona)
-
-                                <td
-                                    class="px-4 py-3 text-center whitespace-nowrap"
-                                >
-
-                                    {{ $fila['zonas'][$zona->id] ?? 0 }}
-
-                                </td>
-
-                            @endforeach
-
-
-                            {{-- Total --}}
-                            <td
-                                class="px-4 py-3 text-center font-bold text-slate-800 whitespace-nowrap"
-                            >
-
-                                {{ $fila['total'] }}
-
+                            <td class="border border-gray-400 px-3 py-2 text-center font-bold"
+                                style="background: #b4c7e7;">
+                                {{ ($fila['variantes']['GRANDE'] ?? 0) ?: '—' }}
                             </td>
 
+                            <td class="border border-gray-400 px-3 py-2 text-center font-bold"
+                                style="background: #b4c7e7;">
+                                {{ ($fila['variantes']['TAMAÑO ÚNICO'] ?? 0) ?: '—' }}
+                            </td>
                         </tr>
-
                     @endforeach
-
-
-                    {{-- ==================================================
-                         SUBTOTAL DE CATEGORÍA
-                    ================================================== --}}
-                    <tr class="bg-slate-50 border-b-2 border-slate-300">
-
-
-                        {{-- Texto --}}
-                        <td
-                            colspan="2"
-                            class="px-4 py-3 font-semibold text-slate-700 text-right whitespace-nowrap"
-                        >
-
-                            SUBTOTAL {{ strtoupper($categoria) }}
-
-                        </td>
-
-
-                        {{-- Subtotal por zona --}}
-                        @foreach($zonas as $zona)
-
-                            <td
-                                class="px-4 py-3 text-center font-bold text-slate-700 whitespace-nowrap"
-                            >
-
-                                {{
-                                    $filas->sum(
-                                        fn ($fila) =>
-                                            $fila['zonas'][$zona->id] ?? 0
-                                    )
-                                }}
-
-                            </td>
-
-                        @endforeach
-
-
-                        {{-- Subtotal general de categoría --}}
-                        <td
-                            class="px-4 py-3 text-center font-bold text-slate-900 whitespace-nowrap"
-                        >
-
-                            {{ $filas->sum('total') }}
-
-                        </td>
-
-                    </tr>
-
-
                 @empty
-
-
-                    {{-- ==================================================
-                         SIN PEDIDOS
-                    ================================================== --}}
                     <tr>
-
-                        <td
-                            colspan="{{ 3 + $zonas->count() }}"
-                            class="px-6 py-12 text-center text-slate-500"
-                        >
-
-                            <div class="text-lg font-medium">
-
-                                No hay pedidos para esta semana.
-
-                            </div>
-
-
-                            <div class="text-sm mt-1">
-
-                                Los pedidos enviados aparecerán aquí automáticamente.
-
-                            </div>
-
+                        <td colspan="4" class="p-6 text-center text-gray-500">
+                            No hay pedidos para esta semana.
                         </td>
-
                     </tr>
-
-
                 @endforelse
-
             </tbody>
 
-
-    
-
-        @if($resumen->isNotEmpty())
-
-            <tfoot class="bg-slate-100 border-t-2">
-                {{-- ====================================================
-    TOTAL SIN MINIS Y PANQUES
-===================================================== --}}
-<tr>
-
-    <td
-        colspan="2"
-        class="px-4 py-3 font-bold text-slate-800 whitespace-nowrap"
-    >
-        TOTAL GENERAL
-    </td>
-
-
-    {{-- Total por zona SIN MINIS Y PANQUES --}}
-    @foreach($zonas as $zona)
-
-        @php
-
-            // Total de la zona
-            $totalZona = $resumen->sum(
-                fn ($fila) =>
-                    $fila['zonas'][$zona->id] ?? 0
-            );
-
-            // Total de Minis y Panques de esta zona
-            $totalMinisZona = $resumen
-                ->filter(fn ($fila) =>
-                    str_contains(
-                        strtoupper(trim($fila['categoria'] ?? '')),
-                        'MINIS Y PANQUES'
-                    )
-                )
-                ->sum(
-                    fn ($fila) =>
-                        $fila['zonas'][$zona->id] ?? 0
-                );
-
-            // Total de la zona SIN Minis
-            $totalZonaSinMinis =
-                $totalZona - $totalMinisZona;
-
-        @endphp
-
-
-        <td
-            class="px-4 py-3 text-center font-bold text-slate-800 whitespace-nowrap"
-        >
-            {{ $totalZonaSinMinis }}
-        </td>
-
-    @endforeach
-
-
-    {{-- Total general SIN Minis --}}
-    <td
-        class="px-4 py-3 text-center font-bold text-slate-900 whitespace-nowrap"
-    >
-        {{ $totalSinMinis }}
-    </td>
-
-</tr>
-
-
-                {{-- ====================================================
-                    TOTAL MINIS Y PANQUES
-                ===================================================== --}}
-                <tr>
-
-                    <td
-                        colspan="2"
-                        class="px-4 py-3 font-bold text-slate-800 whitespace-nowrap"
-                    >
-                        MINIS Y PANQUES
+            <tfoot>
+                <tr style="background: #000000; color: #ffffff;">
+                    <td class="border border-gray-500 px-3 py-3 font-bold">
+                        TOTAL DE PASTEL
                     </td>
 
-                    {{-- Total por zona --}}
-                    @foreach($zonas as $zona)
-
-                        <td
-                            class="px-4 py-3 text-center font-bold text-slate-800 whitespace-nowrap"
-                        >
-                            {{
-                                $resumen
-                                    ->filter(fn ($fila) =>
-                                        str_contains(
-                                            strtoupper(trim($fila['categoria'] ?? '')),
-                                            'MINIS Y PANQUES'
-                                        )
-                                    )
-                                    ->sum(
-                                        fn ($fila) =>
-                                            $fila['zonas'][$zona->id] ?? 0
-                                    )
-                            }}
-                        </td>
-
-                    @endforeach
-
-                    {{-- Total minis --}}
-                    <td
-                        class="px-4 py-3 text-center font-bold text-slate-900 whitespace-nowrap"
-                    >
-                        {{
-                            $resumen
-                                ->filter(fn ($fila) =>
-                                    str_contains(
-                                        strtoupper(trim($fila['categoria'] ?? '')),
-                                        'MINIS Y PANQUES'
-                                    )
-                                )
-                                ->sum('total')
-                        }}
+                    <td class="border border-gray-500 px-3 py-3 text-center font-bold">
+                        {{ number_format($totalPorVariante['CHICO'] ?? 0) }}
                     </td>
 
+                    <td class="border border-gray-500 px-3 py-3 text-center font-bold">
+                        {{ number_format($totalPorVariante['GRANDE'] ?? 0) }}
+                    </td>
+
+                    <td class="border border-gray-500 px-3 py-3 text-center font-bold">
+                        {{ number_format($totalPorVariante['TAMAÑO ÚNICO'] ?? 0) }}
+                    </td>
                 </tr>
-
-
             </tfoot>
 
-        @endif
-
-
-
         </table>
-
     </div>
-
 </div>
 
-
-</div>
 
 <script>
 

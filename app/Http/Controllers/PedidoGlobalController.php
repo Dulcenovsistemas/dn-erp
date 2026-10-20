@@ -89,204 +89,199 @@ class PedidoGlobalController extends Controller
      * SHOW
      * ============================================================
      */
-/**
- * ============================================================
- * SHOW
- * ============================================================
- */
-public function show(PedidoGlobal $pedidoGlobal)
-{
-    /*
-     * ============================================================
-     * FECHAS DEL PEDIDO GLOBAL
-     * ============================================================
-     */
+    
+  
+    public function show(Request $request, PedidoGlobal $pedidoGlobal)
+    {
+        // Filtro de semana
+        $pedidoGlobalId = $request->query('pedido_global_id');
 
-    $inicioSemana = $pedidoGlobal->fecha_inicio
-        ->copy()
-        ->startOfDay();
+        if ($pedidoGlobalId) {
+            $semanaSeleccionada = PedidoGlobal::find($pedidoGlobalId);
 
-    $finSemana = $pedidoGlobal->fecha_fin
-        ->copy()
-        ->endOfDay();
-
-
-    /*
-     * ============================================================
-     * ZONAS
-     * ============================================================
-     */
-
-    $zonas = \App\Models\Zona::orderBy('nombre')->get();
-
-
-    /*
-     * ============================================================
-     * OBTENER PEDIDOS DE LA SEMANA
-     * ============================================================
-     */
-
-    $pedidos = Pedido::with([
-        'zona',
-        'detalles.producto.categoria',
-        'detalles.variante',
-    ])
-    ->where('estatus', 'enviado')
-    ->whereDate(
-        'fecha_entrega',
-        '>=',
-        $inicioSemana->toDateString()
-    )
-    ->whereDate(
-        'fecha_entrega',
-        '<=',
-        $finSemana->toDateString()
-    )
-    ->get();
-
-
-    /*
-     * ============================================================
-     * CONSTRUIR RESUMEN
-     * ============================================================
-     */
-
-    $resumen = [];
-
-
-    foreach ($pedidos as $pedido) {
-
-        foreach ($pedido->detalles as $detalle) {
-
-            $productoId = $detalle->producto_id;
-
-            $varianteId = $detalle->producto_variante_id;
-
-            $zonaId = $pedido->zona_id;
-
-
-            /*
-             * Clave única:
-             *
-             * producto + variante
-             */
-
-            $clave = $productoId . '-' . $varianteId;
-
-
-            /*
-             * Crear registro si todavía no existe
-             */
-
-            if (!isset($resumen[$clave])) {
-
-                $resumen[$clave] = [
-
-                    'categoria' =>
-                        $detalle->producto->categoria->nombre,
-
-                    'producto' =>
-                        $detalle->producto->nombre,
-
-                    'variante' =>
-                        $detalle->variante->nombre,
-
-                    'zonas' => [],
-
-                    'total' => 0,
-
-                ];
+            if ($semanaSeleccionada) {
+                $pedidoGlobal = $semanaSeleccionada;
             }
-
-
-            /*
-             * Inicializar cantidad de la zona
-             */
-
-            if (!isset(
-                $resumen[$clave]['zonas'][$zonaId]
-            )) {
-
-                $resumen[$clave]['zonas'][$zonaId] = 0;
-            }
-
-
-            /*
-             * Sumar cantidad por zona
-             */
-
-            $resumen[$clave]['zonas'][$zonaId]
-                += $detalle->cantidad;
-
-
-            /*
-             * Sumar total general
-             */
-
-            $resumen[$clave]['total']
-                += $detalle->cantidad;
         }
-    }
 
+        // Fechas de la semana seleccionada
+        $inicioSemana = $pedidoGlobal->fecha_inicio->copy()->startOfDay();
+        $finSemana = $pedidoGlobal->fecha_fin->copy()->endOfDay();
 
-    /*
-     * ============================================================
-     * ORDENAR RESUMEN
-     * ============================================================
-     */
+        // Semanas disponibles
+        $semanasDisponibles = PedidoGlobal::orderByDesc('fecha_inicio')->get();
 
-    $resumen = collect($resumen)
-        ->sortBy([
-            ['producto', 'asc'],
-            ['variante', 'asc'],
+        // Zonas disponibles para el filtro
+        $zonasDisponibles = \App\Models\Zona::orderBy('nombre')->get();
+
+        // Filtro de zona: todas por defecto
+        $zonaSeleccionada = $request->query('zona_id', 'todas');
+
+        // Obtener pedidos enviados de la semana
+        $consulta = Pedido::with([
+            'zona',
+            'detalles.producto.categoria',
+            'detalles.variante',
         ])
-        ->values();
+            ->where('estatus', 'enviado')
+            ->whereBetween('fecha_entrega', [
+                $inicioSemana,
+                $finSemana,
+            ]);
+
+        // Aplicar filtro de zona
+        if ($zonaSeleccionada !== 'todas' && $zonaSeleccionada !== '') {
+            $consulta->where('zona_id', $zonaSeleccionada);
+        }
+
+        $pedidos = $consulta->get();
+      
+
+        /*
+        |--------------------------------------------------------------------------
+        | Consolidar por producto y variante
+        |--------------------------------------------------------------------------
+        | Se suman las cantidades de las zonas incluidas en la consulta.
+        */
+
+        
+        $resumen = collect();
+
+        foreach ($pedidos as $pedido) {
+            foreach ($pedido->detalles as $detalle) {
+
+                if (!$detalle->producto || !$detalle->variante) {
+                    continue;
+                }
+
+                $productoId = $detalle->producto_id;
+                $varianteId = $detalle->producto_variante_id;
+                $clave = $productoId;
 
 
-    /*
-     * ============================================================
-     * TOTALES
-     * ============================================================
-     */
+              
+              
+               // Normalizar el nombre de la variante
+                $nombreOriginal = mb_strtoupper(
+                    trim($detalle->variante->nombre ?? ''),
+                    'UTF-8'
+                );
 
-    // Total de absolutamente todo
-    $totalGeneral = $resumen->sum('total');
+                $nombreOriginal = preg_replace('/\s+/u', ' ', $nombreOriginal);
+                $nombreOriginal = trim($nombreOriginal);
+
+                // Detectar el tamaño usando el nombre original
+                if ($nombreOriginal === 'CHICO') {
+                    $nombreVariante = 'CHICO';
+
+                } elseif ($nombreOriginal === 'GRANDE') {
+                    $nombreVariante = 'GRANDE';
+
+                } elseif (str_contains($nombreOriginal, 'UNIC')) {
+                    $nombreVariante = 'TAMAÑO ÚNICO';
+
+                } else {
+                    $nombreVariante = null;
+                }
+                // Crear fila del producto si aún no existe
+                if (!$resumen->has($clave)) {
+                    $resumen->put($clave, [
+                        'producto_id' => $productoId,
+                        'categoria' => $detalle->producto->categoria->nombre
+                            ?? 'Sin categoría',
+                        'producto' => $detalle->producto->nombre,
+                        'variantes' => [
+                            'CHICO' => 0,
+                            'GRANDE' => 0,
+                            'TAMAÑO ÚNICO' => 0,
+                        ],
+                        'total' => 0,
+                    ]);
+                }
 
 
-    // Total únicamente de Minis y Panques
-    $totalMinis = $resumen
-        ->filter(function ($fila) {
+                    if (str_contains($nombreOriginal, 'UNIC')) {
+                        logger()->info('Tamaño único detectado', [
+                            'original' => $nombreOriginal,
+                            'asignado' => $nombreVariante,
+                            'cantidad' => $detalle->cantidad,
+                        ]);
+                    }
 
-            return str_contains(
-                strtoupper(trim($fila['categoria'] ?? '')),
+                // Acumular cantidad en la variante correspondiente
+
+               
+                $fila = $resumen->get($clave);
+                $cantidad = (int) $detalle->cantidad;
+
+                if ($nombreVariante !== null) {
+                    $fila['variantes'][$nombreVariante] += $cantidad;
+                }
+
+                $fila['total'] += $cantidad;
+
+                $resumen->put($clave, $fila);
+            }
+        }
+
+        // Ordenar por categoría y producto
+        $resumen = $resumen
+            ->sortBy([
+                ['categoria', 'asc'],
+                ['producto', 'asc'],
+            ])
+            ->values();
+
+
+        // Calcular totales generales
+        $totalGeneral = $resumen->sum('total');
+
+        $totalMinis = $resumen
+            ->filter(function ($fila) {
+                return str_contains(
+                    mb_strtoupper($fila['categoria']),
+                    'MINIS Y PANQUES'
+                );
+            })
+            ->sum('total');
+
+        $totalSinMinis = $totalGeneral - $totalMinis;
+
+        // Totales por variante, excluyendo minis y panqués
+        $totalPorVariante = [
+            'CHICO' => 0,
+            'GRANDE' => 0,
+            'TAMAÑO ÚNICO' => 0,
+        ];
+
+        foreach ($resumen as $fila) {
+            if (str_contains(
+                mb_strtoupper($fila['categoria']),
                 'MINIS Y PANQUES'
-            );
+            )) {
+                continue;
+            }
 
-        })
-        ->sum('total');
+            foreach ($totalPorVariante as $variante => $total) {
+                $totalPorVariante[$variante] +=
+                    $fila['variantes'][$variante] ?? 0;
+            }
+        }
 
-    // Total general SIN Minis y Panques
-    $totalSinMinis = $totalGeneral - $totalMinis;
-
-    /*
-     * ============================================================
-     * ENVIAR DATOS A LA VISTA
-     * ============================================================
-     */
-
-     return view(
-        'pedidos.globales.show',
-        compact(
+        return view('pedidos.globales.show', compact(
             'pedidoGlobal',
             'resumen',
-            'zonas',
+            'zonasDisponibles',
+            'semanasDisponibles',
+            'zonaSeleccionada',
             'inicioSemana',
             'finSemana',
+            'totalGeneral',
             'totalMinis',
-            'totalSinMinis'
-        )
-    );
-}
+            'totalSinMinis',
+            'totalPorVariante'
+        ));
+    }
 
     /**
      * ============================================================
