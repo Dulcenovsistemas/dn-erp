@@ -551,7 +551,7 @@
                 <div class="dn-nav-group">
                     <div class="dn-nav-heading">Operación</div>
 
-                    @hasanyrole('admin|gerente|Ventas mostrador')
+                    @hasanyrole('admin')
                     <a href="{{ route('admin.ordenes.index') }}"
                        class="dn-nav-link {{ request()->routeIs('admin.ordenes.*') ? 'active' : '' }}">
                         <svg viewBox="0 0 24 24" fill="none"
