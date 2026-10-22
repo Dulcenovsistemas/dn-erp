@@ -604,6 +604,10 @@
                         Pedidos
                     </a>
 
+                    
+
+                    @hasanyrole('admin|pedidos')
+
                     <a href="{{ route('admin.pedidos.maximos.index') }}"
                        class="dn-nav-link {{ request()->routeIs('admin.pedidos.maximos.*') ? 'active' : '' }}">
                         <svg viewBox="0 0 24 24" fill="none"
@@ -616,7 +620,7 @@
                         Pedidos máximos
                     </a>
 
-                    @hasanyrole('admin|pedidos')
+
                     <a href="{{ route('admin.pedidos.globales.index') }}"
                        class="dn-nav-link {{ request()->routeIs('admin.pedidos.globales.*') ? 'active' : '' }}">
                         <svg viewBox="0 0 24 24" fill="none"
