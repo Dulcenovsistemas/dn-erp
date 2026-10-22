@@ -292,7 +292,7 @@
 
 
             {{-- ÓRDENES DE VENTA --}}
-            @hasanyrole('admin|gerente|Ventas mostrador')
+            @hasanyrole('admin')
             <article class="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-md">
 
                 <div class="border-b border-gray-100 p-5 sm:p-6">
