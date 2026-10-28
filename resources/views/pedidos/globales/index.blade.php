@@ -297,45 +297,67 @@
 
                                 </a>
 
-
-                                {{-- Editar --}}
-                                <a
-                                    href="{{ route(
-                                        'admin.pedidos.globales.edit',
-                                        $pedidoGlobal->id
-                                    ) }}"
-                                    class="inline-flex items-center
-                                           px-3 py-2
-                                           border border-slate-300
-                                           text-slate-700
-                                           rounded-lg
-                                           hover:bg-slate-50
-                                           transition"
-                                >
-
-                                    Editar
-
-                                </a>
-
-
-                                {{-- Eliminar --}}
+                                
+                               
+                                
+                                {{-- Cambiar estatus --}}
                                 <form
-                                    action="{{ route('admin.pedidos.globales.destroy', $pedidoGlobal) }}"
+                                    action="{{ route('admin.pedidos.globales.estatus', $pedidoGlobal) }}"
                                     method="POST"
                                     class="inline"
-                                    onsubmit="return confirm('¿Estás seguro de eliminar este pedido global? Esta acción no se puede deshacer.');"
+                                    onsubmit="return confirm('¿Deseas cambiar el estado de este pedido global?');"
                                 >
                                     @csrf
-                                    @method('DELETE')
+                                    @method('PATCH')
 
-                                    <button
-                                        type="submit"
-                                        class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-                                    >
-                                        Eliminar
-                                    </button>
-
+                                    @if($pedidoGlobal->estatus === 'abierto')
+                                        <button
+                                            type="submit"
+                                            class="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                                        >
+                                            Procesar
+                                        </button>
+                                    @else
+                                        <button
+                                            type="submit"
+                                            class="inline-flex items-center px-3 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition"
+                                        >
+                                            Reabrir
+                                        </button>
+                                    @endif
                                 </form>
+
+                                {{-- Editar y Eliminar solo cuando está abierto --}}
+                                @if($pedidoGlobal->estatus === 'abierto')
+
+                                    {{-- Editar --}}
+                                    <a
+                                        href="{{ route('admin.pedidos.globales.edit', $pedidoGlobal->id) }}"
+                                        class="inline-flex items-center px-3 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition"
+                                    >
+                                        Editar
+                                    </a>
+
+                                    {{-- Eliminar --}}
+                                    <form
+                                        action="{{ route('admin.pedidos.globales.destroy', $pedidoGlobal) }}"
+                                        method="POST"
+                                        class="inline"
+                                        onsubmit="return confirm('¿Estás seguro de eliminar este pedido global? Esta acción no se puede deshacer.');"
+                                    >
+                                        @csrf
+                                        @method('DELETE')
+
+                                        <button
+                                            type="submit"
+                                            class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                                        >
+                                            Eliminar
+                                        </button>
+                                    </form>
+
+                                @endif
+
 
                             </div>
 

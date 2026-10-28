@@ -54,6 +54,10 @@
                 </th>
 
                 <th class="px-6 py-4 text-center">
+                    Total de piezas
+                </th>
+
+                <th class="px-6 py-4 text-center">
                     Estado
                 </th>
 
@@ -90,6 +94,15 @@
                     <td class="px-6 py-4 text-gray-600">
                         {{ $pedido->fecha_entrega->format('d/m/Y') }}
                     </td>
+
+                    
+                    {{-- TOTAL DE PIEZAS --}}
+                    <td class="px-6 py-4 text-center">
+                        <span class="inline-flex items-center justify-center min-w-12 px-3 py-1 rounded-lg bg-blue-50 text-blue-700 font-bold">
+                            {{ $pedido->detalles->sum('cantidad') }}
+                        </span>
+                    </td>
+
 
                     <td class="px-6 py-4 text-center">
 
@@ -129,46 +142,66 @@
 
                     </td>
 
-                    <td class="px-6 py-4 flex justify-center gap-3">
+                    
+                    <td class="px-6 py-4">
+                        <div class="flex justify-center gap-3">
 
-                        <a href="{{ route('admin.pedidos.show',$pedido) }}"
-                           class="hover:scale-110 transition">
-                            👁
-                        </a>
-
-                        @if($pedido->estatus != 'ENTREGADO')
-
-                            <a href="{{ route('admin.pedidos.edit',$pedido) }}"
-                               class="hover:scale-110 transition">
-                                ✏️
+                            {{-- VER: siempre disponible --}}
+                            <a href="{{ route('admin.pedidos.show', $pedido) }}"
+                            class="hover:scale-110 transition"
+                            title="Ver pedido">
+                                👁
                             </a>
 
-                            <form action="{{ route('admin.pedidos.destroy',$pedido) }}"
-                                  method="POST"
-                                  onsubmit="return confirm('¿Eliminar este pedido?')">
+                            {{-- EDITAR Y ELIMINAR: solo si no está bloqueado --}}
+                            @if(!$pedido->bloqueado_por_global)
 
-                                @csrf
-                                @method('DELETE')
+                                @if($pedido->estatus != 'ENTREGADO')
 
-                                <button class="hover:scale-110 transition">
-                                    🗑️
-                                </button>
+                                    <a href="{{ route('admin.pedidos.edit', $pedido) }}"
+                                    class="hover:scale-110 transition"
+                                    title="Editar pedido">
+                                        ✏️
+                                    </a>
 
-                            </form>
+                                    <form action="{{ route('admin.pedidos.destroy', $pedido) }}"
+                                        method="POST"
+                                        onsubmit="return confirm('¿Eliminar este pedido?')">
 
-                        @else
+                                        @csrf
+                                        @method('DELETE')
 
-                            <span class="text-gray-300">
-                                ✏️
-                            </span>
+                                        <button type="submit"
+                                                class="hover:scale-110 transition"
+                                                title="Eliminar pedido">
+                                            🗑️
+                                        </button>
+                                    </form>
 
-                            <span class="text-gray-300">
-                                🗑️
-                            </span>
+                                @else
 
-                        @endif
+                                    <span class="text-gray-300" title="No editable">
+                                        ✏️
+                                    </span>
 
+                                    <span class="text-gray-300" title="No eliminable">
+                                        🗑️
+                                    </span>
+
+                                @endif
+
+                            @else
+
+                                <span class="text-gray-300"
+                                    title="Pedido bloqueado por procesamiento global">
+                                    🔒
+                                </span>
+
+                            @endif
+
+                        </div>
                     </td>
+
 
                 </tr>
 

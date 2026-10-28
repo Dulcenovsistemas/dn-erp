@@ -283,6 +283,29 @@ class PedidoGlobalController extends Controller
         ));
     }
 
+
+    
+    public function cambiarEstatus(PedidoGlobal $pedidoGlobal)
+    {
+        $nuevoEstatus = $pedidoGlobal->estatus === 'abierto'
+            ? 'procesado'
+            : 'abierto';
+
+        $pedidoGlobal->update([
+            'estatus' => $nuevoEstatus,
+        ]);
+
+        return redirect()
+            ->route('admin.pedidos.globales.index')
+            ->with(
+                'success',
+                $nuevoEstatus === 'procesado'
+                    ? 'Pedido global procesado correctamente.'
+                    : 'Pedido global reabierto correctamente.'
+            );
+    }
+
+
     /**
      * ============================================================
      * EDIT

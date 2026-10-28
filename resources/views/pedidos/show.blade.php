@@ -211,6 +211,8 @@
 
     </div>
 
+    
+
 
     {{-- ==========================================================
          HOJA DE PRODUCCIÓN
@@ -774,14 +776,7 @@
 </a>
 
 
-        <a
-            href="{{ route('admin.pedidos.edit', $pedido) }}"
-            class="btn-editar"
-        >
-
-            ✎ Editar pedido
-
-        </a>
+       
 
 
     </div>

@@ -213,6 +213,11 @@ Route::middleware(['auth', 'role:admin|pedidos|gerente'])
         )->name('pedidos.exportar');
 
 
+        Route::patch(
+            'pedidos-globales/{pedidoGlobal}/estatus',
+            [PedidoGlobalController::class, 'cambiarEstatus']
+        )->name('pedidos.globales.estatus');
+
 
     });
 

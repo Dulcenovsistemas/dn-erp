@@ -14,6 +14,7 @@ use App\Models\Pedido;
 use App\Models\PedidoDetalle;
 use App\Models\PedidoGlobal;
 
+
 use App\Exports\PedidoExport;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -21,6 +22,33 @@ class PedidoController extends Controller
 {
     
     
+/**
+ * Comprueba si el pedido pertenece a un periodo global procesado.
+ */
+    
+    private function estaBloqueadoPorGlobal(Pedido $pedido): bool
+    {
+        $fechaEntrega = Carbon::parse($pedido->fecha_entrega)
+            ->startOfDay();
+
+        return PedidoGlobal::where('estatus', 'procesado')
+            ->get(['fecha_inicio', 'fecha_fin'])
+            ->contains(function ($global) use ($fechaEntrega) {
+                $inicio = Carbon::parse($global->fecha_inicio)
+                    ->startOfDay();
+
+                // Bloquear hasta el lunes siguiente al final del periodo.
+                $fin = Carbon::parse($global->fecha_fin)
+                    ->next(Carbon::MONDAY)
+                    ->startOfDay();
+
+                return $fechaEntrega->greaterThanOrEqualTo($inicio)
+                    && $fechaEntrega->lessThanOrEqualTo($fin);
+            });
+    }
+
+    
+
     /**
      * Display a listing of the resource.
      */
@@ -42,6 +70,32 @@ class PedidoController extends Controller
         $pedidos = $consulta
             ->latest()
             ->paginate(20);
+
+
+        
+        
+        $globalesProcesados = PedidoGlobal::where('estatus', 'procesado')
+            ->get(['fecha_inicio', 'fecha_fin']);
+
+        $pedidos->getCollection()->transform(function ($pedido) use ($globalesProcesados) {
+            $fechaEntrega = Carbon::parse($pedido->fecha_entrega)->startOfDay();
+
+            $pedido->bloqueado_por_global = $globalesProcesados->contains(
+                function ($global) use ($fechaEntrega) {
+                    $inicio = Carbon::parse($global->fecha_inicio)->startOfDay();
+
+                    $fin = Carbon::parse($global->fecha_fin)
+                        ->next(Carbon::MONDAY)
+                        ->startOfDay();
+
+                    return $fechaEntrega->greaterThanOrEqualTo($inicio)
+                        && $fechaEntrega->lessThanOrEqualTo($fin);
+                }
+            );
+
+            return $pedido;
+        });
+
 
         return view('pedidos.index', compact('pedidos'));
     }
@@ -306,6 +360,15 @@ class PedidoController extends Controller
      */
     public function edit(Pedido $pedido)
     {
+
+        
+        if ($this->estaBloqueadoPorGlobal($pedido)) {
+            return redirect()
+                ->route('admin.pedidos.show', $pedido)
+                ->with('error', 'Este pedido está bloqueado porque su pedido global ya fue procesado.');
+        }
+
+
         $pedido->load([
             'zona',
             'detalles',
@@ -334,6 +397,15 @@ class PedidoController extends Controller
      */
     public function update(Request $request, Pedido $pedido)
     {
+
+        
+        if ($this->estaBloqueadoPorGlobal($pedido)) {
+            return redirect()
+                ->route('admin.pedidos.show', $pedido)
+                ->with('error', 'No puedes modificar un pedido cuyo periodo global ya fue procesado.');
+        }
+
+
         $request->validate([
             'zona_id' => 'required|exists:zonas,id',
             'pedido' => 'required|array',
@@ -448,6 +520,15 @@ class PedidoController extends Controller
      */
     public function destroy(Pedido $pedido)
     {
+
+        
+        if ($this->estaBloqueadoPorGlobal($pedido)) {
+            return redirect()
+                ->route('admin.pedidos.show', $pedido)
+                ->with('error', 'No puedes eliminar un pedido cuyo periodo global ya fue procesado.');
+        }
+
+
         DB::transaction(function () use ($pedido) {
 
             // Eliminar los detalles del pedido

@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 
 class PedidoMaximoController extends Controller
 {
+    private const CATEGORIAS_PERMITIDAS = [2, 3, 9, 10, 11];
     /**
      * Mostrar los máximos configurados.
      */
@@ -47,6 +48,7 @@ class PedidoMaximoController extends Controller
             },
         ])
         ->where('activo', 1)
+        ->whereIn('id', self::CATEGORIAS_PERMITIDAS)
         ->orderBy('nombre')
         ->get();
 
@@ -100,6 +102,7 @@ class PedidoMaximoController extends Controller
             },
         ])
         ->where('activo', 1)
+        ->whereIn('id', self::CATEGORIAS_PERMITIDAS)
         ->orderBy('nombre')
         ->get();
 

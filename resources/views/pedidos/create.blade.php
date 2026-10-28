@@ -12,9 +12,26 @@
 
         {{-- Datos generales --}}
         @include('pedidos.partials.datos-generales')
+         {{-- CONTADOR GENERAL DE PIEZAS --}}
+        <div id="resumen-piezas-pedido">
+            <div class="resumen-piezas-texto">
+                <strong>Total de piezas del pedido</strong>
+                <span>Se actualiza automáticamente al cambiar las cantidades.</span>
+            </div>
+
+            <div class="resumen-piezas-total">
+                <span id="contador-piezas" aria-live="polite">0</span>
+                <span class="resumen-piezas-etiqueta">PIEZAS</span>
+            </div>
+        </div>
+
 
         {{-- Hoja de producción --}}
         @include('pedidos.partials.tabs-table')
+
+        
+       
+
 
 
         {{-- BOTONES INFERIORES --}}
@@ -104,8 +121,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // ACTUALIZAR TOTALES
     // ==========================================
 
+   
     function actualizarTotales() {
 
+        // Actualizar los totales por variante y categoría
         document
             .querySelectorAll('.categoria-produccion')
             .forEach(categoria => {
@@ -115,7 +134,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     .forEach(total => {
 
                         const columna = total.dataset.columna;
-
                         let suma = 0;
 
                         categoria
@@ -123,17 +141,25 @@ document.addEventListener('DOMContentLoaded', function () {
                                 `.cantidad-input[data-columna="${columna}"]`
                             )
                             .forEach(input => {
-
-                                suma += parseInt(input.value) || 0;
-
+                                suma += Math.max(0, Number(input.value) || 0);
                             });
 
                         total.textContent = suma;
-
                     });
-
             });
 
+        // Actualizar el total general del pedido
+        let totalPiezas = 0;
+
+        document.querySelectorAll('.cantidad-input').forEach(input => {
+            totalPiezas += Math.max(0, Number(input.value) || 0);
+        });
+
+        const contador = document.getElementById('contador-piezas');
+
+        if (contador) {
+            contador.textContent = totalPiezas.toLocaleString('es-MX');
+        }
     }
 
 
@@ -319,6 +345,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 
+
+
+
 </script>
 
 
@@ -449,6 +478,60 @@ document.addEventListener('DOMContentLoaded', function () {
 }
 
 
+#resumen-piezas-pedido {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 18px 0;
+    padding: 16px 20px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 12px;
+}
+
+.resumen-piezas-texto {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.resumen-piezas-texto strong {
+    color: #1e3a8a;
+    font-size: 15px;
+}
+
+.resumen-piezas-texto span {
+    color: #1d4ed8;
+    font-size: 12px;
+}
+
+.resumen-piezas-total {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 75px;
+}
+
+#contador-piezas {
+    color: #1e40af;
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.resumen-piezas-etiqueta {
+    color: #1d4ed8;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+
+
 </style>
+
 
 @endsection

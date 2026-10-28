@@ -185,7 +185,6 @@
 
 </div>
 
-
 <style>
 
 .pedido-datos {
@@ -424,3 +423,4 @@
 }
 
 </style>
+

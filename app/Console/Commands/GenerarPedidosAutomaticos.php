@@ -96,23 +96,24 @@ class GenerarPedidosAutomaticos extends Command
          * ============================================================
          */
 
+        
+        $categoriasPermitidas = [2, 3, 9, 10, 11];
+
         $productos = Producto::with([
             'variantes' => function ($query) {
-
                 $query
                     ->where('activo', true)
                     ->orderBy('nombre');
-
             }
         ])
-        ->where('activo', true)
-        ->get()
-        ->filter(function ($producto) {
+            ->where('activo', true)
+            ->whereIn('categoria_id', $categoriasPermitidas)
+            ->get()
+            ->filter(function ($producto) {
+                return $producto->variantes->isNotEmpty();
+            })
+            ->values();
 
-            return $producto->variantes->isNotEmpty();
-
-        })
-        ->values();
 
 
         if ($productos->isEmpty()) {
@@ -242,7 +243,7 @@ $total = 0;
 $esChihuahua =
     mb_strtoupper(trim($zona->nombre)) === 'CHIHUAHUA';
 
-$maximoPorCombinacion = $esChihuahua ? 10 : 2;
+$maximoPorCombinacion = $esChihuahua ? 10 : 3;
 
 
 /*
