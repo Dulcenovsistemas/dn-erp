@@ -109,12 +109,69 @@ document.addEventListener('DOMContentLoaded', function () {
     const botonAnterior =
         document.getElementById('cargar-pedido-anterior');
 
-    const zonaSelect =
-        document.querySelector('[name="zona_id"]');
+   const zonaSelect =
+    document.querySelector('[name="zona_id"]');
 
-    const inputs = document.querySelectorAll(
-        'input[type="number"][name^="pedido["]'
-    );
+// ==========================================
+// MOSTRAR DÍAS SEGÚN LA ZONA
+// ==========================================
+
+const contenedorDias = document.getElementById('pedido-dias');
+
+function actualizarDiasZona() {
+
+    if (!zonaSelect || !contenedorDias) return;
+
+    const opcion = zonaSelect.options[zonaSelect.selectedIndex];
+
+    const diasPermitidos = (opcion.dataset.dias || '')
+        .split(',')
+        .filter(Boolean)
+        .map(Number);
+
+    const columnas = contenedorDias.querySelectorAll('.pedido-dia');
+
+    let visibles = 0;
+
+    columnas.forEach(columna => {
+
+        const numeroDia = Number(columna.dataset.dia);
+
+        const permitido = diasPermitidos.includes(numeroDia);
+
+        columna.classList.toggle(
+            'oculto-por-zona',
+            !permitido
+        );
+
+        columna.querySelectorAll('input[type="number"]').forEach(input => {
+            input.disabled = !permitido;
+        });
+
+        if (permitido) {
+            visibles++;
+        }
+
+    });
+
+    contenedorDias.className =
+        'pedido-dias columnas-activas-' + visibles;
+
+}
+
+// Detectar cambios de zona.
+if (zonaSelect) {
+
+    zonaSelect.addEventListener('change', actualizarDiasZona);
+
+    // Aplicar configuración inicial.
+    actualizarDiasZona();
+
+}
+
+const inputs = document.querySelectorAll(
+    'input[type="number"][name^="pedido["]'
+);
 
 
     // ==========================================
@@ -289,24 +346,74 @@ document.addEventListener('DOMContentLoaded', function () {
 
     }
 
-
     // ==========================================
     // LLENAR ALEATORIAMENTE
+    // RESPETANDO EL MAXIMO SEMANAL
     // ==========================================
 
     botonAleatorio.addEventListener('click', function () {
 
-        inputs.forEach(input => {
+        const opcion = zonaSelect.options[zonaSelect.selectedIndex];
 
-            input.value =
-                Math.floor(Math.random() * 2) + 1;
+        const maximo = Number(opcion.dataset.maximo || 0);
 
+        // Obtener únicamente campos de días permitidos.
+        const inputsDisponibles = Array.from(inputs).filter(input => {
+            return !input.disabled;
+        });
+
+        if (maximo <= 0) {
+            alert('Esta zona no tiene un máximo semanal configurado.');
+            return;
+        }
+
+        if (inputsDisponibles.length === 0) {
+            alert('No hay campos disponibles para distribuir las piezas.');
+            return;
+        }
+
+        // Generar pesos aleatorios para distribuir las piezas.
+        const pesos = inputsDisponibles.map(() => Math.random());
+
+        const sumaPesos = pesos.reduce((total, peso) => total + peso, 0);
+
+        // Calcular la distribución inicial.
+        const distribucion = pesos.map(peso => {
+            return (peso / sumaPesos) * maximo;
+        });
+
+        // Asignar la parte entera de cada distribución.
+        const cantidades = distribucion.map(Math.floor);
+
+        // Calcular las piezas que faltan por distribuir.
+        let restantes = maximo - cantidades.reduce((a, b) => a + b, 0);
+
+        // Ordenar índices según los decimales más grandes.
+        const indices = distribucion
+            .map((valor, indice) => ({
+                indice,
+                decimal: valor - Math.floor(valor)
+            }))
+            .sort((a, b) => b.decimal - a.decimal);
+
+        // Repartir las piezas restantes.
+        for (let i = 0; i < restantes; i++) {
+            cantidades[indices[i].indice]++;
+        }
+
+        // Limpiar primero los campos disponibles.
+        inputsDisponibles.forEach(input => {
+            input.value = 0;
+        });
+
+        // Colocar las cantidades generadas.
+        inputsDisponibles.forEach((input, indice) => {
+            input.value = cantidades[indice];
         });
 
         actualizarTotales();
 
     });
-
 
     // ==========================================
     // LIMPIAR

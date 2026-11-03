@@ -53,37 +53,37 @@
 
     <div class="pedido-datos">
 
-    {{-- ======================================================
-         ZONA
-    ======================================================= --}}
+    
+        {{-- ======================================================
+            ZONA
+        ======================================================= --}}
 
-    <div>
+        <div>
+            <span>ZONA</span>
 
-        <span>ZONA</span>
+            <select
+                name="zona_id"
+                id="zona_id"
+                class="pedido-select"
+                required
+            >
+                @foreach($zonas as $zona)
+                    <option
+                        value="{{ $zona->id }}"
+                        data-dias="{{ $zona->dias->pluck('numero')->implode(',') }}"
+                        data-maximo="{{ $zona->pedidoMaximo->maximo ?? 0 }}"
+                        @selected(
+                            old('zona_id', isset($pedido) && $pedido
+                                ? $pedido->zona_id
+                                : null) == $zona->id
+                        )
+                    >
+                        {{ $zona->nombre }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
 
-        <select
-            name="zona_id"
-            class="pedido-select"
-        >
-
-            @foreach(auth()->user()->zonas as $zona)
-
-                <option
-                    value="{{ $zona->id }}"
-                    @selected(
-                        isset($pedido) &&
-                        $pedido &&
-                        $pedido->zona_id == $zona->id
-                    )
-                >
-                    {{ $zona->nombre }}
-                </option>
-
-            @endforeach
-
-        </select>
-
-    </div>
 
 
     {{-- ======================================================

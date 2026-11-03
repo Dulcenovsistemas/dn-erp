@@ -32,20 +32,8 @@ class GenerarPedidosAutomaticos extends Command
             ->startOfDay();
 
 
-        /*
-         * ============================================================
-         * DÍAS DE LA SEMANA
-         * ============================================================
-         */
-
-        $diasSemana = [];
-
-        for ($i = 0; $i < 6; $i++) {
-
-            $diasSemana[] = $fechaLunes
-                ->copy()
-                ->addDays($i);
-        }
+       
+      
 
 
         /*
@@ -54,7 +42,7 @@ class GenerarPedidosAutomaticos extends Command
          * ============================================================
          */
 
-        $pedidosMaximos = PedidoMaximo::with('zona')
+        $pedidosMaximos = PedidoMaximo::with('zona.dias')
             ->where('maximo', '>', 0)
             ->get();
 
@@ -140,6 +128,30 @@ class GenerarPedidosAutomaticos extends Command
                 continue;
             }
 
+            // ==========================================
+            // DÍAS PERMITIDOS PARA ESTA ZONA
+            // ==========================================
+
+            $diasConfigurados = $zona->dias
+                ->whereBetween('numero', [1, 6])
+                ->sortBy('numero');
+
+            if ($diasConfigurados->isEmpty()) {
+
+                $this->warn(
+                    "Zona {$zona->nombre}: no tiene días de producción configurados."
+                );
+
+                continue;
+            }
+
+            $diasSemana = $diasConfigurados->map(function ($dia) use ($fechaLunes) {
+
+                return $fechaLunes
+                    ->copy()
+                    ->addDays($dia->numero - 1);
+
+            })->values();
 
             /*
              * ========================================================
@@ -243,7 +255,7 @@ $total = 0;
 $esChihuahua =
     mb_strtoupper(trim($zona->nombre)) === 'CHIHUAHUA';
 
-$maximoPorCombinacion = $esChihuahua ? 10 : 3;
+$maximoPorCombinacion = $esChihuahua ? 10 : 5;
 
 
 /*

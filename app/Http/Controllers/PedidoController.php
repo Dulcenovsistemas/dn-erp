@@ -104,13 +104,34 @@ class PedidoController extends Controller
     /**
      * Show the form for creating a new resource.
      */
+  
     public function create()
     {
         $categorias = Categoria::with(['productos' => function ($q) {
             $q->where('activo', 1)->orderBy('nombre');
-        }])->where('activo',1)->get();
+        }])
+        ->where('activo', 1)
+        ->get();
 
-        return view('pedidos.create', compact('categorias'));
+        $usuario = auth()->user();
+
+        // Cargar las zonas que puede utilizar el usuario.
+        $consultaZonas = \App\Models\Zona::with('dias')
+            ->where('activo', 1)
+            ->orderBy('nombre');
+
+        if (!$usuario->hasRole('admin')) {
+            $zonasIds = $usuario->zonas()->pluck('zonas.id');
+
+            $consultaZonas->whereIn('id', $zonasIds);
+        }
+
+        $zonas = $consultaZonas->get();
+
+        return view('pedidos.create', compact(
+            'categorias',
+            'zonas'
+        ));
     }
 
     /**

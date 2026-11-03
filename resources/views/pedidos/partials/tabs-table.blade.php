@@ -110,7 +110,7 @@
 
     <div class="pedido-scroll">
 
-        <div class="pedido-dias">
+        <div class="pedido-dias" id="pedido-dias">
 
             @foreach($dias as $i => $dia)
 
@@ -123,7 +123,10 @@
                 @endphp
 
 
-                <div class="pedido-dia">
+                <div
+                    class="pedido-dia"
+                    data-dia="{{ $i + 1 }}"
+                >
 
 
                     {{-- ==========================================
@@ -155,14 +158,13 @@
 
                         ZONA:
 
-                        <strong>
-
-                            {{ auth()->user()->zonas->first()->nombre ?? 'SIN ZONA' }}
-
+                        <strong class="nombre-zona-pedido">
+                            {{ $zonas->firstWhere('id', old('zona_id', $pedido->zona_id ?? null))?->nombre
+                                ?? $zonas->first()?->nombre
+                                ?? 'SIN ZONA' }}
                         </strong>
 
                     </div>
-
 
                     {{-- ==========================================
                          PRODUCTOS
@@ -355,6 +357,38 @@
 
     }
 
+}
+
+.pedido-dia.oculto-por-zona {
+    display: none;
+}
+
+.pedido-dias {
+    grid-template-columns: repeat(6, minmax(250px, 1fr));
+}
+
+.pedido-dias.columnas-activas-1 {
+    grid-template-columns: minmax(250px, 1fr);
+}
+
+.pedido-dias.columnas-activas-2 {
+    grid-template-columns: repeat(2, minmax(250px, 1fr));
+}
+
+.pedido-dias.columnas-activas-3 {
+    grid-template-columns: repeat(3, minmax(250px, 1fr));
+}
+
+.pedido-dias.columnas-activas-4 {
+    grid-template-columns: repeat(4, minmax(250px, 1fr));
+}
+
+.pedido-dias.columnas-activas-5 {
+    grid-template-columns: repeat(5, minmax(250px, 1fr));
+}
+
+.pedido-dias.columnas-activas-6 {
+    grid-template-columns: repeat(6, minmax(250px, 1fr));
 }
 
 </style>

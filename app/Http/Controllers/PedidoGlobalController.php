@@ -117,6 +117,13 @@ class PedidoGlobalController extends Controller
         // Filtro de zona: todas por defecto
         $zonaSeleccionada = $request->query('zona_id', 'todas');
 
+        // Tipo de consulta: semana o día
+        $tipoConsulta = $request->query('tipo_consulta', 'semana');
+
+        if (!in_array($tipoConsulta, ['semana', 'dia'], true)) {
+            $tipoConsulta = 'semana';
+        }
+
         // Obtener pedidos enviados de la semana
         $consulta = Pedido::with([
             'zona',
@@ -146,6 +153,8 @@ class PedidoGlobalController extends Controller
 
         
         $resumen = collect();
+        // Resumen independiente por cada día de producción.
+        $resumenPorDia = collect();
 
         foreach ($pedidos as $pedido) {
             foreach ($pedido->detalles as $detalle) {
@@ -221,6 +230,55 @@ class PedidoGlobalController extends Controller
                 $fila['total'] += $cantidad;
 
                 $resumen->put($clave, $fila);
+
+
+                // ============================================================
+                // CONSOLIDAR TAMBIÉN POR DÍA
+                // ============================================================
+
+                $fechaDetalle = $detalle->fecha
+                    ? \Carbon\Carbon::parse($detalle->fecha)->toDateString()
+                    : null;
+
+                if ($fechaDetalle) {
+
+                    // Crear el contenedor del día si todavía no existe.
+                    if (!$resumenPorDia->has($fechaDetalle)) {
+                        $resumenPorDia->put($fechaDetalle, collect());
+                    }
+
+                    $resumenDia = $resumenPorDia->get($fechaDetalle);
+
+                    // Crear la fila del producto si todavía no existe.
+                    if (!$resumenDia->has($clave)) {
+
+                        $resumenDia->put($clave, [
+                            'producto_id' => $productoId,
+                            'categoria' => $detalle->producto->categoria->nombre
+                                ?? 'Sin categoría',
+                            'producto' => $detalle->producto->nombre,
+                            'variantes' => [
+                                'CHICO' => 0,
+                                'GRANDE' => 0,
+                                'TAMAÑO ÚNICO' => 0,
+                            ],
+                            'total' => 0,
+                        ]);
+                    }
+
+                    $filaDia = $resumenDia->get($clave);
+
+                    // Sumar únicamente la cantidad correspondiente a esta fecha.
+                    if ($nombreVariante !== null) {
+                        $filaDia['variantes'][$nombreVariante] += $cantidad;
+                    }
+
+                    $filaDia['total'] += $cantidad;
+
+                    $resumenDia->put($clave, $filaDia);
+
+                    $resumenPorDia->put($fechaDetalle, $resumenDia);
+                }
             }
         }
 
@@ -231,6 +289,68 @@ class PedidoGlobalController extends Controller
                 ['producto', 'asc'],
             ])
             ->values();
+
+        // Ordenar los productos dentro de cada día.
+        $resumenPorDia = $resumenPorDia->map(function ($filas) {
+
+            return $filas
+                ->sortBy([
+                    ['categoria', 'asc'],
+                    ['producto', 'asc'],
+                ])
+                ->values();
+
+        });
+
+        // ============================================================
+        // PREPARAR LOS DÍAS DE LA SEMANA
+        // ============================================================
+
+        $nombresDias = [
+            1 => 'LUNES',
+            2 => 'MARTES',
+            3 => 'MIÉRCOLES',
+            4 => 'JUEVES',
+            5 => 'VIERNES',
+            6 => 'SÁBADO',
+        ];
+
+        $diasSemana = collect();
+
+        $fechaActual = $inicioSemana->copy()->startOfDay();
+
+        // ============================================================
+// PREPARAR LOS DÍAS DE LA SEMANA
+// ============================================================
+
+$nombresDias = [
+    1 => 'LUNES',
+    2 => 'MARTES',
+    3 => 'MIÉRCOLES',
+    4 => 'JUEVES',
+    5 => 'VIERNES',
+    6 => 'SÁBADO',
+    7 => 'DOMINGO',
+];
+
+$diasSemana = collect();
+
+$fechaActual = $inicioSemana->copy()->startOfDay();
+
+    while ($fechaActual->lte($finSemana)) {
+
+        $fechaClave = $fechaActual->toDateString();
+
+        $numeroDia = $fechaActual->dayOfWeekIso;
+
+        $diasSemana->push([
+            'fecha' => $fechaClave,
+            'nombre' => $nombresDias[$numeroDia],
+            'resumen' => $resumenPorDia->get($fechaClave, collect()),
+        ]);
+
+        $fechaActual->addDay();
+    }
 
 
         // Calcular totales generales
@@ -271,6 +391,8 @@ class PedidoGlobalController extends Controller
         return view('pedidos.globales.show', compact(
             'pedidoGlobal',
             'resumen',
+            'diasSemana',
+            'tipoConsulta',
             'zonasDisponibles',
             'semanasDisponibles',
             'zonaSeleccionada',

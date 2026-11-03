@@ -54,12 +54,15 @@ $resumenPorCategoria = $resumen->groupBy('categoria');
 
 
 
-{{-- FILTROS DE ZONA Y SEMANA --}}
+
+{{-- FILTROS DE PEDIDOS GLOBALES --}}
 <div class="bg-white rounded-xl shadow p-5 mb-6">
+
     <form method="GET"
           action="{{ request()->url() }}"
           class="flex flex-wrap items-end gap-4">
 
+        {{-- SEMANA --}}
         <div class="flex flex-col gap-1">
             <label for="pedido_global_id"
                    class="text-sm font-semibold text-slate-700">
@@ -69,6 +72,7 @@ $resumenPorCategoria = $resumen->groupBy('categoria');
             <select name="pedido_global_id"
                     id="pedido_global_id"
                     class="border border-slate-300 rounded-lg px-3 py-2 min-w-64">
+
                 @foreach($semanasDisponibles as $semana)
                     <option value="{{ $semana->id }}"
                         @selected($semana->id == $pedidoGlobal->id)>
@@ -77,9 +81,11 @@ $resumenPorCategoria = $resumen->groupBy('categoria');
                         {{ \Carbon\Carbon::parse($semana->fecha_fin)->format('d/m/Y') }}
                     </option>
                 @endforeach
+
             </select>
         </div>
 
+        {{-- ZONA --}}
         <div class="flex flex-col gap-1">
             <label for="zona_id"
                    class="text-sm font-semibold text-slate-700">
@@ -89,6 +95,7 @@ $resumenPorCategoria = $resumen->groupBy('categoria');
             <select name="zona_id"
                     id="zona_id"
                     class="border border-slate-300 rounded-lg px-3 py-2 min-w-56">
+
                 <option value="todas"
                     @selected($zonaSeleccionada === 'todas')>
                     Todas las zonas
@@ -100,9 +107,35 @@ $resumenPorCategoria = $resumen->groupBy('categoria');
                         {{ $zona->nombre }}
                     </option>
                 @endforeach
+
             </select>
         </div>
 
+        {{-- TIPO DE CONSULTA --}}
+        <div class="flex flex-col gap-1">
+            <label for="tipo_consulta"
+                   class="text-sm font-semibold text-slate-700">
+                Tipo de consulta
+            </label>
+
+            <select name="tipo_consulta"
+                    id="tipo_consulta"
+                    class="border border-slate-300 rounded-lg px-3 py-2 min-w-56">
+
+                <option value="semana"
+                    @selected($tipoConsulta === 'semana')>
+                    Por semana
+                </option>
+
+                <option value="dia"
+                    @selected($tipoConsulta === 'dia')>
+                    Por día
+                </option>
+
+            </select>
+        </div>
+
+        {{-- BOTONES --}}
         <button type="submit"
                 class="rounded-lg bg-emerald-700 hover:bg-emerald-800
                        text-white font-semibold px-5 py-2.5 transition">
@@ -111,10 +144,12 @@ $resumenPorCategoria = $resumen->groupBy('categoria');
 
         <a href="{{ request()->url() }}"
            class="rounded-lg border border-slate-300
-                  text-slate-700 font-semibold px-5 py-2.5">
+                  text-slate-700 font-semibold px-5 py-2.5 hover:bg-slate-50 transition">
             Limpiar
         </a>
+
     </form>
+
 </div>
 
 
@@ -222,7 +257,7 @@ $resumenPorCategoria = $resumen->groupBy('categoria');
 
 
 
-
+@if($tipoConsulta === 'semana')
 <div class="bg-white rounded-xl shadow overflow-hidden">
     <div class="w-full overflow-x-auto">
         <table class="w-full border-collapse text-sm">
@@ -311,7 +346,268 @@ $resumenPorCategoria = $resumen->groupBy('categoria');
         </table>
     </div>
 </div>
+@endif
+{{-- ============================================================
+     DESGLOSE DE PRODUCCIÓN POR DÍA
+============================================================ --}}
+@if($tipoConsulta === 'dia')
+<div class="bg-white rounded-xl shadow p-6 mt-8">
 
+    {{-- PESTAÑAS DE LOS DÍAS --}}
+<div class="flex flex-wrap gap-2 mb-6">
+
+    @foreach($diasSemana as $indice => $dia)
+
+        <button
+            type="button"
+            data-dia-tab="{{ $indice }}"
+            class="px-5 py-3 rounded-lg font-semibold text-sm transition
+                {{ $loop->first
+                    ? 'bg-emerald-700 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}"
+        >
+            {{ $dia['nombre'] }}
+
+            <span class="block text-xs font-normal mt-1">
+                {{ \Carbon\Carbon::parse($dia['fecha'])->format('d/m/Y') }}
+            </span>
+        </button>
+
+    @endforeach
+
+</div>
+
+    <div class="mb-5">
+        <h2 class="text-xl font-bold text-slate-800">
+            PRODUCCIÓN POR DÍA
+        </h2>
+
+        <p class="text-sm text-slate-500 mt-1">
+            Consulta las cantidades correspondientes a cada día de la semana.
+        </p>
+    </div>
+
+
+
+
+    {{-- CONTENIDO DE CADA DÍA --}}
+    @foreach($diasSemana as $indice => $dia)
+
+        @php
+            $resumenDiaPorCategoria = $dia['resumen']->groupBy('categoria');
+
+            $totalesDia = [
+                'CHICO' => 0,
+                'GRANDE' => 0,
+                'TAMAÑO ÚNICO' => 0,
+            ];
+
+            foreach ($dia['resumen'] as $fila) {
+
+                if (str_contains(
+                    mb_strtoupper($fila['categoria']),
+                    'MINIS Y PANQUES'
+                )) {
+                    continue;
+                }
+
+                foreach ($totalesDia as $variante => $total) {
+                    $totalesDia[$variante] +=
+                        $fila['variantes'][$variante] ?? 0;
+                }
+            }
+        @endphp
+
+        <div
+            data-dia-contenido="{{ $indice }}"
+            class="{{ $loop->first ? '' : 'hidden' }} border border-slate-200 rounded-xl p-5"
+        >
+
+            <div class="flex items-center justify-between mb-4">
+
+                <h3 class="text-lg font-bold text-slate-700">
+                    {{ $dia['nombre'] }}
+                </h3>
+
+                <span class="text-sm text-slate-500">
+                    {{ \Carbon\Carbon::parse($dia['fecha'])->format('d/m/Y') }}
+                </span>
+
+            </div>
+
+
+            <div class="overflow-x-auto">
+
+                <table class="w-full border-collapse text-sm">
+
+                    <thead>
+                        <tr style="background: #f08cf0;">
+
+                            <th class="border border-gray-400 px-3 py-2 text-left">
+                                PRODUCTO
+                            </th>
+
+                            <th class="border border-gray-400 px-3 py-2 text-center">
+                                CHICO
+                            </th>
+
+                            <th class="border border-gray-400 px-3 py-2 text-center">
+                                GRANDE
+                            </th>
+
+                            <th class="border border-gray-400 px-3 py-2 text-center">
+                                TAMAÑO ÚNICO
+                            </th>
+
+                        </tr>
+                    </thead>
+
+
+                    <tbody>
+
+                        @forelse($resumenDiaPorCategoria as $categoria => $filas)
+
+                            <tr style="background: #f08cf0;">
+
+                                <td colspan="4"
+                                    class="border border-gray-400 px-3 py-2 font-bold uppercase">
+                                    {{ $categoria }}
+                                </td>
+
+                            </tr>
+
+                            @foreach($filas as $fila)
+
+                                <tr>
+
+                                    <td class="border border-gray-400 px-3 py-2 bg-white">
+                                        {{ $fila['producto'] }}
+                                    </td>
+
+                                    <td class="border border-gray-400 px-3 py-2 text-center font-bold"
+                                        style="background: #b4c7e7;">
+                                        {{ ($fila['variantes']['CHICO'] ?? 0) ?: '—' }}
+                                    </td>
+
+                                    <td class="border border-gray-400 px-3 py-2 text-center font-bold"
+                                        style="background: #b4c7e7;">
+                                        {{ ($fila['variantes']['GRANDE'] ?? 0) ?: '—' }}
+                                    </td>
+
+                                    <td class="border border-gray-400 px-3 py-2 text-center font-bold"
+                                        style="background: #b4c7e7;">
+                                        {{ ($fila['variantes']['TAMAÑO ÚNICO'] ?? 0) ?: '—' }}
+                                    </td>
+
+                                </tr>
+
+                            @endforeach
+
+                        @empty
+
+                            <tr>
+                                <td colspan="4"
+                                    class="p-6 text-center text-gray-500">
+                                    No hay producción registrada para este día.
+                                </td>
+                            </tr>
+
+                        @endforelse
+
+                    </tbody>
+
+
+                    <tfoot>
+
+                        <tr style="background: #000000; color: #ffffff;">
+
+                            <td class="border border-gray-500 px-3 py-3 font-bold">
+                                TOTAL DE PASTEL
+                            </td>
+
+                            <td class="border border-gray-500 px-3 py-3 text-center font-bold">
+                                {{ number_format($totalesDia['CHICO']) }}
+                            </td>
+
+                            <td class="border border-gray-500 px-3 py-3 text-center font-bold">
+                                {{ number_format($totalesDia['GRANDE']) }}
+                            </td>
+
+                            <td class="border border-gray-500 px-3 py-3 text-center font-bold">
+                                {{ number_format($totalesDia['TAMAÑO ÚNICO']) }}
+                            </td>
+
+                        </tr>
+
+                    </tfoot>
+
+                </table>
+
+            </div>
+
+        </div>
+        
+
+      @endforeach
+
+</div>
+@endif
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const botonesDias = document.querySelectorAll('[data-dia-tab]');
+    const contenidosDias = document.querySelectorAll('[data-dia-contenido]');
+
+    botonesDias.forEach(boton => {
+
+        boton.addEventListener('click', function () {
+
+            const diaSeleccionado = this.dataset.diaTab;
+
+            // Ocultar todas las tablas.
+            contenidosDias.forEach(contenido => {
+                contenido.classList.add('hidden');
+            });
+
+            // Mostrar la tabla seleccionada.
+            const contenidoActivo = document.querySelector(
+                `[data-dia-contenido="${diaSeleccionado}"]`
+            );
+
+            if (contenidoActivo) {
+                contenidoActivo.classList.remove('hidden');
+            }
+
+            // Actualizar el estilo de las pestañas.
+            botonesDias.forEach(tab => {
+                tab.classList.remove(
+                    'bg-emerald-700',
+                    'text-white'
+                );
+
+                tab.classList.add(
+                    'bg-slate-100',
+                    'text-slate-600'
+                );
+            });
+
+            this.classList.remove(
+                'bg-slate-100',
+                'text-slate-600'
+            );
+
+            this.classList.add(
+                'bg-emerald-700',
+                'text-white'
+            );
+
+        });
+
+    });
+
+});
+</script>
 
 <script>
 

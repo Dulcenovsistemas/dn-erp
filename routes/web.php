@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\MovimientoInventarioController;
 use App\Http\Controllers\PedidoGlobalController;
 use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\PedidoMaximoController;
+use App\Http\Controllers\Admin\ZonaController;
 
 
 use App\Livewire\OrdenVentaGastos;
@@ -48,6 +49,9 @@ Route::middleware(['auth', 'role:admin|pedidos|gerente'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
+
+        Route::resource('zonas', ZonaController::class)
+            ->names('zonas');
 
         // CRUD base
         Route::resource('sucursales', SucursalController::class);

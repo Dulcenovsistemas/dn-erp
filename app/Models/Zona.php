@@ -31,4 +31,10 @@ class Zona extends Model
     {
         return $this->hasOne(PedidoMaximo::class);
     }
+
+    public function dias()
+    {
+        return $this->belongsToMany(Dia::class, 'dia_zona')
+            ->orderBy('numero');
+    }
 }
