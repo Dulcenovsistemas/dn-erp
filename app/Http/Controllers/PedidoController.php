@@ -13,7 +13,7 @@ use Carbon\Carbon;
 use App\Models\Pedido;
 use App\Models\PedidoDetalle;
 use App\Models\PedidoGlobal;
-
+use App\Models\Zona;
 
 use App\Exports\PedidoExport;
 use Maatwebsite\Excel\Facades\Excel;
@@ -404,13 +404,18 @@ class PedidoController extends Controller
             },
             'productos.variantes'
         ])
+        
+
         ->where('activo', 1)
         ->orderBy('nombre')
         ->get();
 
+        $zonas = Zona::orderBy('nombre')->get();
+
         return view('pedidos.edit', compact(
             'pedido',
-            'categorias'
+            'categorias',
+            'zonas'
         ));
     }
     /**

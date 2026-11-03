@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Dia;
 use Illuminate\Database\Seeder;
 
+
 class DiaSeeder extends Seeder
 {
     public function run(): void
