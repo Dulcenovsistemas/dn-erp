@@ -52,7 +52,10 @@
         ];
 
         foreach ($categoriasOrdenadas as $categoria)  {
-            $productosCategoria = $categoria->productos;
+            $productosCategoria = $categoria->productos
+                ->where('activo', 1)
+                ->sortBy('nombre')
+                ->values();
 
             $detallesCategoria = $detallesDia->filter(function ($detalle) use ($categoria) {
                 return $detalle->producto
