@@ -28,6 +28,7 @@
     */
     $bloques = [];
     $maxVariantes = 1;
+    $acumuladosSemanales = [];
 
     foreach ($dias as $i => $dia) {
         $fechaDia = $inicioSemana->copy()->addDays($i);
@@ -98,6 +99,19 @@
                     ->sum('cantidad');
             }
 
+            foreach ($detallesCategoria as $detalle) {
+                if (!$detalle->producto || !$detalle->variante) {
+                    continue;
+                }
+
+                $idProducto = $detalle->producto_id;
+                $nombreVariante = strtoupper(trim($detalle->variante->nombre));
+
+                $acumuladosSemanales[$idProducto][$nombreVariante] =
+                    ($acumuladosSemanales[$idProducto][$nombreVariante] ?? 0)
+                    + $detalle->cantidad;
+            }
+
             $filas[] = [
                 'tipo' => 'categoria',
                 'titulo' => strtoupper($categoria->nombre),
@@ -162,6 +176,115 @@
 
         $bloques[] = $filas;
     }
+
+        // Construir el bloque de acumulados semanales
+        $filasSemanales = [];
+
+        $filasSemanales[] = [
+            'tipo' => 'dia',
+            'titulo' => 'ACUMULADO SEMANAL',
+        ];
+
+        $filasSemanales[] = [
+            'tipo' => 'zona',
+            'titulo' => 'LUNES A SÁBADO',
+        ];
+
+        foreach ($categoriasOrdenadas as $categoria) {
+
+            $productosCategoria = $categoria->productos
+                ->where('activo', 1)
+                ->sort(function ($a, $b) {
+                    return strnatcasecmp($a->nombre, $b->nombre);
+                })
+                ->values();
+
+            $variantesSemanales = $productosCategoria
+                ->flatMap(function ($producto) use ($detallesPedido) {
+                    return $producto->variantes->filter(function ($variante) use ($producto, $detallesPedido) {
+                        return $variante->activo
+                            || $detallesPedido->contains(function ($detalle) use ($producto, $variante) {
+                                return $detalle->producto_id == $producto->id
+                                    && $detalle->producto_variante_id == $variante->id;
+                            });
+                    });
+                })
+                ->unique(fn ($variante) => strtoupper(trim($variante->nombre)))
+                ->sortBy(function ($variante) {
+                    return match (strtoupper(trim($variante->nombre))) {
+                        'CHICO' => 1,
+                        'GRANDE' => 2,
+                        'TAMAÑO UNICO', 'TAMAÑO ÚNICO' => 3,
+                        default => 99,
+                    };
+                })
+                ->values();
+
+            $maxVariantes = max($maxVariantes, $variantesSemanales->count());
+
+            $filasSemanales[] = [
+                'tipo' => 'categoria',
+                'titulo' => strtoupper($categoria->nombre),
+            ];
+
+            $encabezados = ['PRODUCTO'];
+
+            foreach ($variantesSemanales as $variante) {
+                $encabezados[] = strtoupper($variante->nombre);
+            }
+
+            $filasSemanales[] = [
+                'tipo' => 'encabezados',
+                'celdas' => $encabezados,
+            ];
+
+            foreach ($productosCategoria as $producto) {
+
+                $celdas = [strtoupper($producto->nombre)];
+
+                foreach ($variantesSemanales as $variante) {
+                    $nombreVariante = strtoupper(trim($variante->nombre));
+
+                    $cantidad = $acumuladosSemanales[$producto->id][$nombreVariante] ?? 0;
+
+                    $celdas[] = $cantidad > 0 ? $cantidad : '—';
+                }
+
+                $filasSemanales[] = [
+                    'tipo' => 'producto',
+                    'celdas' => $celdas,
+                ];
+            }
+
+            $celdasTotal = ['TOTAL'];
+
+            foreach ($variantesSemanales as $variante) {
+                $nombreVariante = strtoupper(trim($variante->nombre));
+
+                $totalVariante = 0;
+
+                foreach ($productosCategoria as $producto) {
+                    $totalVariante += $acumuladosSemanales[$producto->id][$nombreVariante] ?? 0;
+                }
+
+                $celdasTotal[] = $totalVariante;
+            }
+
+            $filasSemanales[] = [
+                'tipo' => 'total-categoria',
+                'celdas' => $celdasTotal,
+            ];
+        }
+
+        $filasSemanales[] = [
+            'tipo' => 'total-dia',
+            'titulo' => 'TOTAL SEMANAL: ' . collect($acumuladosSemanales)
+                ->map(fn ($variantes) => array_sum($variantes))
+                ->sum() . ' PIEZAS',
+        ];
+
+        // Agregar el bloque semanal después de los seis días
+        $bloques[] = $filasSemanales;
 
     /*
     |--------------------------------------------------------------------------
@@ -238,7 +361,11 @@
                     $estilo = '';
 
                     if ($tipo === 'dia') {
-                        $estilo = 'background-color:#111827;color:#FFFFFF;font-weight:bold;text-align:center;';
+                        if (str_contains($fila['titulo'] ?? '', 'ACUMULADO SEMANAL')) {
+                            $estilo = 'background-color:#047857;color:#FFFFFF;font-weight:bold;text-align:center;';
+                        } else {
+                            $estilo = 'background-color:#111827;color:#FFFFFF;font-weight:bold;text-align:center;';
+                        }
                     } elseif ($tipo === 'zona') {
                         $estilo = 'background-color:#F3F4F6;font-weight:bold;text-align:center;';
                     } elseif ($tipo === 'categoria') {
