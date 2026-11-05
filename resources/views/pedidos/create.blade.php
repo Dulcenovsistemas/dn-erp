@@ -40,16 +40,6 @@
             <button
                 type="submit"
                 name="accion"
-                value="borrador"
-                class="btn-borrador">
-
-                Guardar borrador
-
-            </button>
-
-            <button
-                type="submit"
-                name="accion"
                 value="enviar"
                 class="btn-enviar">
 
@@ -68,27 +58,31 @@
         <button
             type="button"
             id="llenar-aleatorio"
-            class="btn-aleatorio">
-
-            🎲 Aleatorio
-
+            class="btn-flotante btn-aleatorio"
+            title="Aleatorio"
+        >
+            <span class="icono">🎲</span>
+            <span class="texto">Aleatorio</span>
         </button>
 
         <button
             type="button"
             id="limpiar-pedido"
-            class="btn-limpiar">
-
-            🧹 Limpiar
-
+            class="btn-flotante btn-limpiar"
+            title="Limpiar pedido"
+        >
+            <span class="icono">🧹</span>
+            <span class="texto">Limpiar</span>
         </button>
 
         <button
             type="button"
             id="cargar-pedido-anterior"
-            class="btn-anterior"
+            class="btn-flotante btn-anterior"
+            title="Cargar pedido anterior"
         >
-            ↻ Cargar pedido anterior
+            <span class="icono">↻</span>
+            <span class="texto">Cargar pedido anterior</span>
         </button>
 
     </div>
@@ -237,7 +231,7 @@ const inputs = document.querySelectorAll(
 
 
             botonAnterior.disabled = true;
-            botonAnterior.textContent = 'Cargando...';
+            botonAnterior.querySelector('.texto').textContent = 'Cargando...';
 
 
             try {
@@ -337,9 +331,8 @@ const inputs = document.querySelectorAll(
             } finally {
 
                 botonAnterior.disabled = false;
-                botonAnterior.textContent =
-                    '↻ Cargar pedido anterior';
-
+                botonAnterior.querySelector('.texto').textContent =
+                        'Cargar pedido anterior';
             }
 
         });
@@ -482,32 +475,10 @@ const inputs = document.querySelectorAll(
     margin-top: 12px;
 }
 
-.btn-borrador,
-.btn-enviar {
-    border: none;
-    border-radius: 6px;
-    padding: 10px 18px;
-    color: white;
-    cursor: pointer;
-    font-size: 13px;
-}
-
-.btn-borrador {
-    background: #4b5563;
-}
-
-.btn-enviar {
-    background: #2563eb;
-}
-
-
-/* ==========================================
-   ETIQUETAS LATERALES DEL PEDIDO
-========================================== */
-
+/* CONTENEDOR DE BOTONES FLOTANTES */
 .pedido-flotantes {
     position: fixed;
-    right: 0;
+    right: 20px;
     top: 45%;
     transform: translateY(-50%);
     z-index: 9999;
@@ -515,74 +486,111 @@ const inputs = document.querySelectorAll(
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 8px;
+    gap: 10px;
 }
 
-.pedido-flotantes button {
-    border: none;
-    border-radius: 10px 0 0 10px;
-    padding: 12px 14px;
+/* BOTONES */
+.btn-flotante {
+    box-sizing: border-box;
+    width: 52px;
+    height: 52px;
+    padding: 0 15px;
 
-    color: white;
-    font-size: 12px;
-    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+
+    overflow: hidden;
     white-space: nowrap;
 
+    border: none;
+    border-radius: 50px;
+
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, .12);
 
-    transition: padding-right .2s ease,
-                filter .2s ease,
-                box-shadow .2s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+
+    transition: width 0.3s ease,
+                transform 0.3s ease,
+                box-shadow 0.3s ease;
 }
 
-/* Efecto al pasar el cursor */
-.pedido-flotantes button:hover {
-    padding-right: 22px;
-    filter: brightness(.92);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, .18);
+/* ICONOS */
+.btn-flotante .icono {
+    min-width: 22px;
+    font-size: 20px;
+    text-align: center;
 }
 
-/* Colores */
+/* TEXTO */
+.btn-flotante .texto {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+/* EXPANSIÓN */
+.btn-flotante:hover {
+    width: max-content;
+    max-width: 280px;
+    border-radius: 30px;
+    transform: translateX(-5px);
+}
+
+.btn-flotante:hover .texto {
+    opacity: 1;
+}
+
+/* COLORES */
 .btn-aleatorio {
     background: #7c3aed;
 }
 
 .btn-limpiar {
-    background: #ef4444;
+    background: #dc2626;
 }
 
 .btn-anterior {
     background: #0f766e;
 }
 
-/* Botón deshabilitado */
+/* HOVER */
+.btn-aleatorio:hover {
+    background: #6d28d9;
+}
+
+.btn-limpiar:hover {
+    background: #b91c1c;
+}
+
+.btn-anterior:hover {
+    background: #115e59;
+}
+
+/* DESHABILITADO */
 .pedido-flotantes button:disabled {
     opacity: .6;
     cursor: not-allowed;
-    box-shadow: none;
 }
 
-/* Adaptación para móviles */
+/* MÓVILES */
 @media (max-width: 768px) {
     .pedido-flotantes {
-        top: auto;
+        right: 10px;
         bottom: 15px;
-        right: 0;
+        top: auto;
         transform: none;
-        gap: 6px;
     }
 
-    .pedido-flotantes button {
-        padding: 10px 11px;
-        font-size: 11px;
-        border-radius: 8px 0 0 8px;
-    }
-
-    .pedido-flotantes button:hover {
-        padding-right: 14px;
+    .btn-flotante {
+        width: 46px;
+        height: 46px;
     }
 }
+
 
 
 #resumen-piezas-pedido {
@@ -636,6 +644,73 @@ const inputs = document.querySelectorAll(
     letter-spacing: 1px;
 }
 
+/* ACCIONES DEL PEDIDO */
+.pedido-acciones {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    margin-top: 20px;
+    padding: 15px 0;
+}
+
+/* ESTILO GENERAL */
+.btn-borrador,
+.btn-enviar {
+    border: none;
+    border-radius: 9px;
+    padding: 12px 22px;
+    min-width: 155px;
+
+    color: white;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+
+    transition: all 0.25s ease;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+}
+
+/* GUARDAR BORRADOR */
+.btn-borrador {
+    background: #475569;
+}
+
+.btn-borrador:hover {
+    background: #334155;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(0,0,0,0.18);
+}
+
+/* ENVIAR PEDIDO */
+.btn-enviar {
+    background: #047857;
+}
+
+.btn-enviar:hover {
+    background: #065f46;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(0,0,0,0.18);
+}
+
+/* EFECTO AL PRESIONAR */
+.btn-borrador:active,
+.btn-enviar:active {
+    transform: translateY(0);
+}
+
+/* MÓVILES */
+@media (max-width: 600px) {
+    .pedido-acciones {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn-borrador,
+    .btn-enviar {
+        width: 100%;
+    }
+}
 
 
 </style>
