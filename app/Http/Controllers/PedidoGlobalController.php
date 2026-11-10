@@ -8,6 +8,8 @@ use App\Models\PedidoDetalle;
 use App\Models\Pedido;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Exports\PedidosGlobalesExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PedidoGlobalController extends Controller
 {
@@ -405,6 +407,48 @@ $fechaActual = $inicioSemana->copy()->startOfDay();
         ));
     }
 
+
+/**
+ * ============================================================
+ * EXPORTAR PEDIDOS GLOBALES A EXCEL
+ * ============================================================
+ */
+
+    public function exportarExcel(Request $request, PedidoGlobal $pedidoGlobal)
+    {
+        // Reutilizar exactamente los datos del método show().
+        $vista = $this->show($request, $pedidoGlobal);
+
+        $datos = $vista->getData();
+
+        // Obtener el nombre de la zona seleccionada.
+        $zonaNombre = 'Todas las zonas';
+
+        if ($datos['zonaSeleccionada'] !== 'todas') {
+
+            $zona = $datos['zonasDisponibles']->firstWhere(
+                'id',
+                $datos['zonaSeleccionada']
+            );
+
+            $zonaNombre = $zona
+                ? $zona->nombre
+                : 'Todas las zonas';
+        }
+
+        // Agregar el nombre de la zona a los datos de exportación.
+        $datos['zonaNombre'] = $zonaNombre;
+
+        // Nombre del archivo.
+        $nombreArchivo = 'Pedidos_Globales_' .
+            $datos['inicioSemana']->format('d-m-Y') . '_' .
+            $datos['finSemana']->format('d-m-Y') . '.xlsx';
+
+        return Excel::download(
+            new PedidosGlobalesExport($datos),
+            $nombreArchivo
+        );
+    }
 
     
     public function cambiarEstatus(PedidoGlobal $pedidoGlobal)

@@ -150,8 +150,40 @@ $resumenPorCategoria = $resumen->groupBy('categoria');
 
     </form>
 
+
+<div class="fixed bottom-6 right-6 z-50">
+
+    <a href="{{ route('admin.pedidos.globales.exportar', [
+        'pedidoGlobal' => $pedidoGlobal->id,
+        'pedido_global_id' => $pedidoGlobal->id,
+        'zona_id' => $zonaSeleccionada
+    ]) }}"
+       class="inline-flex items-center gap-3 rounded-full
+              bg-emerald-700 hover:bg-emerald-800
+              text-white font-semibold px-6 py-4
+              shadow-xl hover:shadow-2xl
+              transition-all duration-300
+              hover:-translate-y-1">
+
+        <svg xmlns="http://www.w3.org/2000/svg"
+             width="22"
+             height="22"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <path d="M14 2v6h6"/>
+            <path d="M8 13h8M8 17h8"/>
+        </svg>
+
+        Exportar a Excel
+
+    </a>
+
 </div>
 
+</div>
 
 {{-- INDICADORES DE PRODUCCIÓN --}}
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">

@@ -172,6 +172,12 @@ Route::middleware(['auth', 'role:admin|pedidos|gerente'])
         // PEDIDOS GLOBALES
         // ============================================================
 
+        // Exportar pedidos globales a Excel
+        Route::get(
+            'pedidos-globales/{pedidoGlobal}/exportar',
+            [PedidoGlobalController::class, 'exportarExcel']
+        )->name('pedidos.globales.exportar');
+
         Route::post(
             'pedidos-globales/generar',
             [PedidoGlobalController::class, 'generar']

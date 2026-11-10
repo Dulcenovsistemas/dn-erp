@@ -352,7 +352,22 @@ const inputs = document.querySelectorAll(
 
         // Obtener únicamente campos de días permitidos.
         const inputsDisponibles = Array.from(inputs).filter(input => {
-            return !input.disabled;
+            const categoria = input.closest('.categoria-produccion');
+
+            if (!categoria || input.disabled) {
+                return false;
+            }
+
+            const nombreCategoria = categoria
+                .querySelector('h2, h3, .categoria-titulo')
+                ?.textContent.trim().toUpperCase() || '';
+                console.log('Categoría detectada:', nombreCategoria);
+            // Excluir MINIS Y PANQUÉS
+            if (nombreCategoria.includes('MINIS Y PANQU')) {
+                return false;
+            }
+
+            return true;
         });
 
         if (maximo <= 0) {
