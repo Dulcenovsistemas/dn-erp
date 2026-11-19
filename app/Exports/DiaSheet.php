@@ -30,17 +30,21 @@ class DiaSheet implements FromArray, WithTitle, WithStyles, WithColumnWidths
 
     public function array(): array
     {
+
+        $this->filasCategoria = [];
+        $this->filasSeparacion = [];
+        $this->filaTotal = null;
+
         $dia = $this->dia;
 
-        $filas = [
+      $filas = [
             ['PRODUCCIÓN DE PEDIDOS GLOBALES'],
             [$dia['nombre']],
             ['FECHA:', Carbon::parse($dia['fecha'])->format('d/m/Y')],
             ['ZONA:', $this->zonaNombre],
-            [],
+            ['', '', '', ''],
             ['PRODUCTO', 'CHICO', 'GRANDE', 'TAMAÑO ÚNICO'],
         ];
-
         $resumenPorCategoria = $dia['resumen']->groupBy('categoria');
 
         $totales = [
@@ -49,11 +53,14 @@ class DiaSheet implements FromArray, WithTitle, WithStyles, WithColumnWidths
             'TAMAÑO ÚNICO' => 0,
         ];
 
+        
         foreach ($resumenPorCategoria as $categoria => $productos) {
 
-            $this->filasCategoria[] = count($filas) + 1;
-
+            // Insertar encabezado de categoría.
             $filas[] = [$categoria, '', '', ''];
+
+            // Registrar la fila exacta del encabezado.
+            $this->filasCategoria[] = count($filas);
 
             foreach ($productos as $producto) {
 
@@ -63,12 +70,6 @@ class DiaSheet implements FromArray, WithTitle, WithStyles, WithColumnWidths
                     $producto['variantes']['GRANDE'] ?? 0,
                     $producto['variantes']['TAMAÑO ÚNICO'] ?? 0,
                 ];
-
-                // Registrar fila de separación entre categorías.
-                $this->filasSeparacion[] = count($filas) + 1;
-
-                // Agregar espacio vacío.
-                $filas[] = ['', '', '', ''];
 
                 // Excluir minis y panqués de los totales de pasteles.
                 if (str_contains(
@@ -83,7 +84,14 @@ class DiaSheet implements FromArray, WithTitle, WithStyles, WithColumnWidths
                         $producto['variantes'][$variante] ?? 0;
                 }
             }
+
+            // Espacio entre categorías, excepto después de la última.
+            if ($categoria !== $resumenPorCategoria->keys()->last()) {
+                $filas[] = ['', '', '', ''];
+                $this->filasSeparacion[] = count($filas);
+            }
         }
+
 
         $filas[] = [
             'TOTAL DE PASTEL',
@@ -100,8 +108,11 @@ class DiaSheet implements FromArray, WithTitle, WithStyles, WithColumnWidths
         return $filas;
     }
 
+    
+
     public function styles(Worksheet $sheet)
     {
+
         $sheet->mergeCells('A1:D1');
         $sheet->mergeCells('A2:D2');
         $sheet->mergeCells('B4:D4');
@@ -178,16 +189,30 @@ class DiaSheet implements FromArray, WithTitle, WithStyles, WithColumnWidths
                 ],
             ]);
 
-        // Bordes.
-        $ultimaFila = $sheet->getHighestRow();
+        // Bordes de la tabla.
+        $ultimaFila = $this->filaTotal;
 
         $sheet->getStyle("A6:D{$ultimaFila}")
             ->getBorders()
             ->getAllBorders()
             ->setBorderStyle('thin');
 
+        // Quitar bordes de las filas de separación.
+        foreach ($this->filasSeparacion as $fila) {
+
+            $sheet->getStyle("A{$fila}:D{$fila}")
+                ->getBorders()
+                ->getAllBorders()
+                ->setBorderStyle(
+                    \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_NONE
+                );
+
+            $sheet->getRowDimension($fila)->setRowHeight(12);
+        }
+
         // Cantidades centradas y con separador de miles.
         if ($ultimaFila >= 7) {
+
             $sheet->getStyle("B7:D{$ultimaFila}")
                 ->getAlignment()
                 ->setHorizontal('center');
@@ -197,13 +222,15 @@ class DiaSheet implements FromArray, WithTitle, WithStyles, WithColumnWidths
                 ->setFormatCode('#,##0');
         }
 
-        $sheet->freezePane('A7');
-
+        // Espacio debajo del total.
         $sheet->getRowDimension($this->filaTotal + 1)
-    ->setRowHeight(15);
+            ->setRowHeight(15);
+
+        $sheet->freezePane('A7');
 
         return [];
     }
+
 
     public function columnWidths(): array
     {

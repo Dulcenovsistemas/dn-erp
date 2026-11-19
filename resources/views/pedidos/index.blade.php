@@ -154,7 +154,19 @@
                             </a>
 
                             {{-- EDITAR Y ELIMINAR: solo si no está bloqueado --}}
-                            @if(!$pedido->bloqueado_por_global)
+                            
+                            {{-- EDITAR Y ELIMINAR --}}
+                            @php
+                                $usuario = auth()->user();
+
+                                $puedeEditar = $usuario->hasAnyRole(['admin', 'pedidos'])
+                                    || (
+                                        $usuario->hasRole('gerente')
+                                        && !$pedido->bloqueado_por_global
+                                    );
+                            @endphp
+
+                            @if($puedeEditar)
 
                                 @if($pedido->estatus != 'ENTREGADO')
 
@@ -199,7 +211,6 @@
 
                             @endif
 
-                        </div>
                     </td>
 
 

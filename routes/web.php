@@ -152,17 +152,17 @@ Route::middleware(['auth', 'role:admin|pedidos|gerente'])
         // PEDIDOS INDIVIDUALES
         // ============================================================
 
+        
+        Route::get(
+            'pedidos/anterior/{zona}',
+            [PedidoController::class, 'anterior']
+        )->name('pedidos.anterior');
+
         // Exportar pedido a Excel
         Route::get(
             'pedidos/{pedido}/exportar',
             [PedidoController::class, 'exportarExcel']
         )->name('pedidos.exportar');
-
-        // Pedido anterior
-        Route::get(
-            'pedidos/anterior/{zona}',
-            [PedidoController::class, 'anterior']
-        )->name('pedidos.anterior');
 
         // CRUD de pedidos individuales
         Route::resource('pedidos', PedidoController::class);
@@ -193,6 +193,12 @@ Route::middleware(['auth', 'role:admin|pedidos|gerente'])
             ->names('pedidos.globales')
             ->except(['create', 'store']);
 
+        // Cambiar estatus del pedido global
+        Route::patch(
+            'pedidos-globales/{pedidoGlobal}/estatus',
+            [PedidoGlobalController::class, 'cambiarEstatus']
+        )->name('pedidos.globales.estatus');
+
 
         // ============================================================
         // PEDIDOS MÁXIMOS
@@ -206,6 +212,7 @@ Route::middleware(['auth', 'role:admin|pedidos|gerente'])
                 'pedidos-maximos' => 'pedidoMaximo'
             ])
             ->names('pedidos.maximos');
+
 
 
 
@@ -229,7 +236,7 @@ Route::middleware(['auth', 'role:admin|pedidos|gerente'])
         )->name('pedidos.globales.estatus');
 
 
-    });
+});
 
         
         

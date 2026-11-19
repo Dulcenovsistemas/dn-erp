@@ -425,6 +425,14 @@
                         <span class="text-gray-400 transition group-hover/enlace:translate-x-1 group-hover/enlace:text-emerald-700">→</span>
                     </a>
 
+                    <a href="{{ route('admin.zonas.index') }}"
+                       class="group/enlace flex items-center justify-between gap-3 rounded-xl border border-gray-100 px-4 py-3 transition hover:border-emerald-200 hover:bg-emerald-50">
+                        <span class="text-sm font-medium text-gray-700">
+                            Días disponibles
+                        </span>
+                        <span class="text-gray-400 transition group-hover/enlace:translate-x-1 group-hover/enlace:text-emerald-700">→</span>
+                    </a>
+
 
                     <a href="{{ route('admin.pedidos.globales.index') }}"
                        class="group/enlace flex items-center justify-between gap-3 rounded-xl border border-gray-100 px-4 py-3 transition hover:border-emerald-200 hover:bg-emerald-50">

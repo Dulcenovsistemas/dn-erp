@@ -383,12 +383,16 @@ class PedidoController extends Controller
     {
 
         
-        if ($this->estaBloqueadoPorGlobal($pedido)) {
+        $usuario = auth()->user();
+
+        if (
+            $usuario->hasRole('gerente') &&
+            $this->estaBloqueadoPorGlobal($pedido)
+        ) {
             return redirect()
                 ->route('admin.pedidos.show', $pedido)
-                ->with('error', 'Este pedido está bloqueado porque su pedido global ya fue procesado.');
+                ->with('error', 'Este pedido ya no puede editarse porque su pedido global fue procesado.');
         }
-
 
         $pedido->load([
             'zona',
@@ -425,10 +429,15 @@ class PedidoController extends Controller
     {
 
         
-        if ($this->estaBloqueadoPorGlobal($pedido)) {
+        $usuario = auth()->user();
+
+        if (
+            $usuario->hasRole('gerente') &&
+            $this->estaBloqueadoPorGlobal($pedido)
+        ) {
             return redirect()
                 ->route('admin.pedidos.show', $pedido)
-                ->with('error', 'No puedes modificar un pedido cuyo periodo global ya fue procesado.');
+                ->with('error', 'No tienes permiso para modificar este pedido porque su pedido global ya fue procesado.');
         }
 
 
