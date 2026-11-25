@@ -85,36 +85,53 @@
                         No hay productos registrados.
                     </div>
                 @else
-                    <div class="divide-y">
-                        @foreach ($productos as $producto)
-                            <label class="flex items-center gap-3 px-5 py-4 hover:bg-gray-50 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    name="producto_ids[]"
-                                    value="{{ $producto->id }}"
-                                    @checked(in_array($producto->id, $productosAsignados))
-                                    class="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
-                                >
+    @php
+        $productosPorCategoria = $productos
+            ->groupBy(fn ($producto) => $producto->categoria?->nombre ?? 'Sin categoría')
+            ->sortKeys();
+    @endphp
 
-                                <span class="flex-1">
-                                    <span class="block text-sm font-medium">
-                                        {{ $producto->nombre }}
-                                    </span>
+    <div class="p-5 space-y-5">
+        @foreach ($productosPorCategoria as $nombreCategoria => $productosCategoria)
+            <section class="overflow-hidden rounded-xl border border-gray-200">
 
-                                    <span class="block text-xs text-gray-500">
-                                        {{ $producto->categoria?->nombre ?? 'Sin categoría' }}
-                                    </span>
+                <div class="flex items-center justify-between bg-gray-100 px-4 py-3">
+                    <h3 class="text-sm font-bold uppercase tracking-wide text-gray-700">
+                        {{ $nombreCategoria }}
+                    </h3>
+
+                    <span class="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-gray-600">
+                        {{ $productosCategoria->count() }} productos
+                    </span>
+                </div>
+
+                <div class="divide-y divide-gray-100">
+                    @foreach ($productosCategoria->sortBy('nombre') as $producto)
+                        <label class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50">
+                            <input
+                                type="checkbox"
+                                name="producto_ids[]"
+                                value="{{ $producto->id }}"
+                                @checked(in_array($producto->id, $productosAsignados))
+                                class="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                            >
+
+                            <span class="flex-1 text-sm font-medium text-gray-800">
+                                {{ $producto->nombre }}
+                            </span>
+
+                            @unless ($producto->activo)
+                                <span class="rounded bg-gray-100 px-2 py-1 text-xs text-gray-500">
+                                    Inactivo
                                 </span>
-
-                                @unless ($producto->activo)
-                                    <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                        Inactivo
-                                    </span>
-                                @endunless
-                            </label>
-                        @endforeach
-                    </div>
-                @endif
+                            @endunless
+                        </label>
+                    @endforeach
+                </div>
+            </section>
+        @endforeach
+    </div>
+@endif
             </div>
 
             <div class="flex justify-end mt-5">
