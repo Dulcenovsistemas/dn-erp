@@ -37,4 +37,15 @@ class Zona extends Model
         return $this->belongsToMany(Dia::class, 'dia_zona')
             ->orderBy('numero');
     }
+
+    public function productos()
+    {
+        return $this->belongsToMany(
+            Producto::class,
+            'producto_zona',
+            'zona_id',
+            'producto_id'
+        );
+    }
+    
 }

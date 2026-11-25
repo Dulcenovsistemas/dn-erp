@@ -10,15 +10,25 @@
         Productos
     </h1>
 
-    <a
-        href="{{ route('admin.productos.create') }}"
-        class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm"
-    >
-        + Nuevo producto
-    </a>
+    <div class="flex items-center gap-3">
+
+        <a
+            href="{{ route('admin.productos-zona.index') }}"
+            class="px-4 py-2 rounded-lg text-sm border border-gray-200 bg-white hover:bg-gray-50"
+        >
+            Productos por zona
+        </a>
+
+        <a
+            href="{{ route('admin.productos.create') }}"
+            class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm"
+        >
+            + Nuevo producto
+        </a>
+
+    </div>
 
 </div>
-
 
 {{-- Burbujas de categorías --}}
 <div class="flex gap-2 overflow-x-auto pb-4 mb-4">

@@ -32,4 +32,15 @@ class Producto extends Model
     {
         return $this->hasMany(PedidoDetalle::class);
     }
+
+    public function zonas()
+    {
+        return $this->belongsToMany(
+            Zona::class,
+            'producto_zona',
+            'producto_id',
+            'zona_id'
+        );
+    }
+    
 }

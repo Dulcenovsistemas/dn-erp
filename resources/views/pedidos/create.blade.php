@@ -57,16 +57,6 @@
 
         <button
             type="button"
-            id="llenar-aleatorio"
-            class="btn-flotante btn-aleatorio"
-            title="Aleatorio"
-        >
-            <span class="icono">🎲</span>
-            <span class="texto">Aleatorio</span>
-        </button>
-
-        <button
-            type="button"
             id="limpiar-pedido"
             class="btn-flotante btn-limpiar"
             title="Limpiar pedido"
@@ -123,9 +113,14 @@ function actualizarDiasZona() {
         .filter(Boolean)
         .map(Number);
 
+    console.log('Zona seleccionada:', opcion.textContent.trim());
+    console.log('Días permitidos:', diasPermitidos);
+
     const columnas = contenedorDias.querySelectorAll('.pedido-dia');
 
     let visibles = 0;
+
+    // El resto de tu función sigue igual...
 
     columnas.forEach(columna => {
 
@@ -153,19 +148,50 @@ function actualizarDiasZona() {
 
 }
 
+
 // Detectar cambios de zona.
 if (zonaSelect) {
-
-    zonaSelect.addEventListener('change', actualizarDiasZona);
+    zonaSelect.addEventListener('change', () => {
+        actualizarDiasZona();
+        actualizarProductosZona();
+    });
 
     // Aplicar configuración inicial.
     actualizarDiasZona();
-
+    actualizarProductosZona();
 }
 
 const inputs = document.querySelectorAll(
     'input[type="number"][name^="pedido["]'
 );
+
+
+function actualizarProductosZona() {
+    if (!zonaSelect) return;
+
+    const zonaId = zonaSelect.value;
+
+    document.querySelectorAll('.categoria-produccion').forEach(categoria => {
+        const filas = categoria.querySelectorAll('tbody tr[data-zonas]');
+        let visibles = 0;
+
+        filas.forEach(fila => {
+            const zonas = (fila.dataset.zonas || '')
+                .split(',')
+                .filter(Boolean);
+
+            const mostrar = zonas.includes(zonaId);
+
+            fila.hidden = !mostrar;
+
+            if (mostrar) visibles++;
+        });
+
+        categoria.hidden = visibles === 0;
+    });
+}
+
+
 
 
     // ==========================================

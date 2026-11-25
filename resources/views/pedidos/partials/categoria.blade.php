@@ -182,7 +182,7 @@
                 @endphp
 
 
-                <tr>
+                <tr data-zonas="{{ $producto->zonas->pluck('id')->implode(',') }}">
 
 
                     {{-- ==================================================

@@ -19,6 +19,7 @@ use App\Http\Controllers\PedidoGlobalController;
 use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\PedidoMaximoController;
 use App\Http\Controllers\Admin\ZonaController;
+use App\Http\Controllers\Admin\ProductoZonaController;
 
 
 use App\Livewire\OrdenVentaGastos;
@@ -234,6 +235,18 @@ Route::middleware(['auth', 'role:admin|pedidos|gerente'])
             'pedidos-globales/{pedidoGlobal}/estatus',
             [PedidoGlobalController::class, 'cambiarEstatus']
         )->name('pedidos.globales.estatus');
+
+
+        // PRODUCTOS POR ZONA
+        Route::get(
+            'productos-zona',
+            [ProductoZonaController::class, 'index']
+        )->name('productos-zona.index');
+
+        Route::put(
+            'productos-zona/{zona}',
+            [ProductoZonaController::class, 'update']
+        )->name('productos-zona.update');
 
 
 });
