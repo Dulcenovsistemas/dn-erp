@@ -96,9 +96,16 @@
             <section class="overflow-hidden rounded-xl border border-gray-200">
 
                 <div class="flex items-center justify-between bg-gray-100 px-4 py-3">
-                    <h3 class="text-sm font-bold uppercase tracking-wide text-gray-700">
-                        {{ $nombreCategoria }}
-                    </h3>
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            class="check-todos-categoria rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                        >
+
+                        <h3 class="text-sm font-bold uppercase tracking-wide text-gray-700">
+                            {{ $nombreCategoria }}
+                        </h3>
+                    </label>
 
                     <span class="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-gray-600">
                         {{ $productosCategoria->count() }} productos
@@ -147,3 +154,39 @@
 @endif
 
 @endsection
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.check-todos-categoria').forEach(checkCategoria => {
+        const categoria = checkCategoria.closest('section');
+
+        const productos = categoria.querySelectorAll(
+            'input[type="checkbox"][name="producto_ids[]"]'
+        );
+
+        function actualizarCheckCategoria() {
+            const seleccionados = [...productos].filter(check => check.checked).length;
+
+            checkCategoria.checked =
+                productos.length > 0 && seleccionados === productos.length;
+
+            checkCategoria.indeterminate =
+                seleccionados > 0 && seleccionados < productos.length;
+        }
+
+        checkCategoria.addEventListener('change', function () {
+            productos.forEach(check => {
+                check.checked = checkCategoria.checked;
+            });
+
+            checkCategoria.indeterminate = false;
+        });
+
+        productos.forEach(check => {
+            check.addEventListener('change', actualizarCheckCategoria);
+        });
+
+        actualizarCheckCategoria();
+    });
+});
+</script>
